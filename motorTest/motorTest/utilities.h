@@ -6,9 +6,18 @@
 #include <stdio.h>
 #define TRUE  1
 #define FALSE 0
+#define NUMBER_OF_MUSCLES 1
+
+const int loadCellSlotNumber = 5;
+const int motorAnalogOutSlotNumber = 2;
+const int motorEnableSlotNumber = 2;
+const int motorEncoderSlotNumber = 3;
+const int motorEnableChannelNumber = 0;
+const int loadCellChannelNumber[7] = {0, 8, 1, 9, 2, 10, 11};
+const int motorAnalogOutChannelNumber[7] = {8, 9, 10, 11, 12, 13, 14};
+const int motorEncoderChannelNumber[7] = {0, 1, 2, 3, 4, 5 , 6};
 
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
-
 const int samplingFrequency = 1000;
 const double PI = 3.14159265358979323846;
 const double shaftRadius = 0.003;// motor shaft radius in cm
