@@ -7,15 +7,15 @@
 #include <windows.h>
 #include <process.h>
 #include <ctime>
-#include <time.h>
+#include <timeClass.h>
 
 class motorControl
 {
     int errorMotorControl;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I;
-    time timeData;
+    double I, encoderBias, encoderGain;
+    timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);
     HANDLE hIOMutex;
@@ -28,7 +28,10 @@ class motorControl
     int createDataEnable();
     int createWindingUpCommand();
     int createPortNumber(int,int,char *,char *);
-public:    
+    int createFileName(char *,tm *);
+    int scaleMuscleLengthData(float64 *);
+    int scaleloadCellData(float64 *);
+public:
     motorControl();
     ~motorControl(void);
     bool isEnable, isWindUp, isControlling;
@@ -39,5 +42,4 @@ public:
     int motorControllerEnd();
     double getTime();
 };
-
 #endif

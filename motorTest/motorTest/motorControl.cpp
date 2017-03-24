@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <ctime>
 motorControl::motorControl()
 {
     I = 3;
@@ -13,6 +14,10 @@ motorControl::motorControl()
     isEnable = FALSE;
     isWindUp = FALSE;
     isControlling = FALSE;
+    encoderBias = 0;
+    encoderGain = 1;
+    for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
+        loadCellOffset[i] = 0;
 }
 motorControl::~motorControl()
 {
@@ -27,7 +32,7 @@ int motorControl::motorEnable()
     
     char        errBuff[2048]={'\0'};
     int32       error=0;
-    float64 zeroVoltages[5]={0.0,0.0,0.0,0.0,0.0},zeroVoltage={0.0};
+    float64 zeroVoltages[NUMBER_OF_MUSCLES]={0.0},zeroVoltage={0.0};
     DAQmxErrChk (DAQmxStartTask(motorEnableHandle));
     DAQmxErrChk (DAQmxStartTask(motorTaskHandle));
     DAQmxErrChk (DAQmxWriteDigitalU32(motorEnableHandle,1,1,10.0,DAQmx_Val_GroupByChannel,&dataEnable,NULL,NULL));
@@ -43,9 +48,9 @@ Error:
 		DAQmxClearTask(motorTaskHandle);
         DAQmxStopTask(motorEnableHandle);
 		DAQmxClearTask(motorEnableHandle);
-
 		printf("DAQmx Error: %s\n",errBuff);
         printf("Motor enable Error\n");
+        return 2;
 	}
     return 0;
 }
@@ -72,6 +77,7 @@ Error:
         DAQmxClearTask(motorTaskHandle);
 		printf("DAQmx Error: %s\n",errBuff);
         printf("winding up Error\n");
+        return 3;
 	}
      return 0;
 }
@@ -85,263 +91,87 @@ void motorControl::controlLoop(void)
 {
     int32       error=0;
     float cotexDrive = 0.0;
-    bool keepReading=TRUE;
+    bool firstSample = TRUE;
     bool32 isLate = {0};
     double tick=0.0,tock=0.0;
-    float64 motorCommand[5]={0.0,0.0,0.0,0.0,0.0},errorForce[3]= {0.0,0.0,0.0},integral[3]={0.0,0.0,0.0},EMG={0.0};
-    char        errBuff[2048]={'\0'};
+    float64 motorCommand[NUMBER_OF_MUSCLES]={0.0},errorForce[NUMBER_OF_MUSCLES]= {0.0},integral[NUMBER_OF_MUSCLES]={0};
+    float64 loadCellData[NUMBER_OF_MUSCLES]={0.0}, motorRef[NUMBER_OF_MUSCLES]={0.0}, muscleLength[NUMBER_OF_MUSCLES]={0.0};
     FILE *dataFile;
+    char fileName[200], dataSample[600]="", dataTemp[100]="", errBuff[2048]={'\0'};
+
     time_t t = time(NULL);
     tm* timePtr = localtime(&t);
-    char fileName[200];
-    char dataSample[600]="";
-    char dataTemp[100]="";
-    sprintf_s(
-            fileName,
-            "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
-            timePtr->tm_year+1900, 
-            timePtr->tm_mon+1, 
-            timePtr->tm_mday, 
-            timePtr->tm_hour, 
-            timePtr->tm_min, 
-            timePtr->tm_sec
-            );
+    createFileName(fileName,timePtr);
     dataFile = fopen(fileName,"w");
-    //fprintf(dataFile,"Time, Load Cell1, Load Cell2, Motor Command1, Motor Command2, Length 1, Length2, Velocity1, Velocity2, EMG1, EMG2, is sample missed\n");
-    //fprintf(dataFile,"Time, Load Cell1, Load Cell2, Length 1, Length2, Velocity1, Velocity2, EMG1, EMG2, GammaStat, GammaDyn, is sample missed\n");
-    //fprintf(dataFile,"Time, Load Cell1, Load Cell2, Length 1, Length2, motorRef1, motorRef2, spindleIa1, spindleIa2, spindleII1, spindleII2, EMG1, EMG2, GammaStat, GammaDyn, is sample missed\n");
-    //fprintf(dataFile,"Time, Length 1, Length2, EMG1, EMG2, GammaStat, GammaDyn, is sample missed\n");
     fprintf(dataFile,header);
+    
     DAQmxErrChk (DAQmxStartTask(loadCelltaskHandle));
     DAQmxErrChk (DAQmxStartTask(motorTaskHandle));
-    DAQmxErrChk (DAQmxStartTask(encodertaskHandle[0]));
-    DAQmxErrChk (DAQmxStartTask(encodertaskHandle[1]));
-    DAQmxErrChk (DAQmxStartTask(encodertaskHandle[2]));
+    for (int i = 0; i < NUMBER_OF_MUSCLES; i++)
+        DAQmxErrChk (DAQmxStartTask(encodertaskHandle[i]));
     DAQmxErrChk (DAQmxStartTask(motorEnableHandle));
+
     timeData.resetTimer();
     tick = timeData.getCurrentTime();
     float64 goffsetLoadCell[2]={0};
-    int expProtocol = 0;
-    int expProtocoAdvance = 0;
-    uInt32 clockBit = 0x00000080;
-    uInt32 clockBitXOR;
-    clockBitXOR = ((clockBit>>7) | (dataEnable>>31));
-    bool flg = true;
     while(live)
     {
-        if(flg)
-        {
-        clockBitXOR = 0xff;
-        flg = false;
-        }
-        else
-        {
-            clockBitXOR = 0x01111111;
-            flg = true;
-        }
-        if (dataEnable == 0x07)
-            dataEnable = 0x87;
-        else
-            dataEnable = 0x07;
-        //else if (dataEnable == 71)
-        //    dataEnable = 7;
-
-        //DAQmxErrChk (DAQmxWriteDigitalU32(motorEnableHandle,1,1,10.0,DAQmx_Val_GroupByChannel,&clockBitXOR,NULL,NULL));
         DAQmxErrChk (DAQmxWriteDigitalU32(motorEnableHandle,1,1,10.0,DAQmx_Val_GroupByChannel,&dataEnable,NULL,NULL));
         WaitForSingleObject(hIOMutex, INFINITE);
-        //desire Forced, muscle Length, muscle Velocity PIPES should be read here
-        
         DAQmxErrChk(DAQmxWaitForNextSampleClock(loadCelltaskHandle,10, &isLate));
-        DAQmxErrChk (DAQmxReadAnalogF64(loadCelltaskHandle,-1,10.0,DAQmx_Val_GroupByScanNumber,loadCellData,4,NULL,NULL));
+        DAQmxErrChk (DAQmxReadAnalogF64(loadCelltaskHandle,-1,10.0,DAQmx_Val_GroupByScanNumber,loadCellData,NUMBER_OF_MUSCLES,NULL,NULL));
         DAQmxErrChk (DAQmxWriteAnalogF64(motorTaskHandle,1,FALSE,10,DAQmx_Val_GroupByChannel,motorCommand,NULL,NULL));
-        DAQmxErrChk (DAQmxReadCounterF64(encodertaskHandle[0],1,10.0,encoderData1,1,NULL,0));
-        DAQmxErrChk (DAQmxReadCounterF64(encodertaskHandle[1],1,10.0,encoderData2,1,NULL,0));
-        DAQmxErrChk (DAQmxReadCounterF64(encodertaskHandle[2],1,10.0,encoderData3,1,NULL,0));
-        if (dataAcquisitionFlag[1]){
-            EMG = muscleEMG[0];
-            if (EMG > 6)
-                EMG = 6;
-            if (EMG < -6)
-                EMG = -6;
-        }
-        else
-            EMG = 0;
+        for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            DAQmxErrChk (DAQmxReadCounterF64(encodertaskHandle[i],1,10.0,&encoderData[i],1,NULL,0));
         tock = timeData.getCurrentTime();
-        if (resetMuscleLength)
+        scaleMuscleLengthData(encoderData);
+        scaleloadCellData(loadCellData);
+        if (firstSample)
         {
-            muscleLengthOffset[0] = 2 * PI * shaftRadius * encoderData1[0] / 365;
-            muscleLengthOffset[1] = 2 * PI * shaftRadius * encoderData2[0] / 365;
-            muscleLengthOffset[2] = 2 * PI * shaftRadius * encoderData3[0] / 365;
-            resetMuscleLength = FALSE;
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+                loadCellOffset[i] = loadCellData[i];
+            firstSample = FALSE;
         }
-        muscleLength[0] = ((2 * PI * shaftRadius * encoderData1[0] / 365) - muscleLengthOffset[0]);
-        muscleLength[0] = encoderBias[0] + muscleLength[0] *encoderGain[0];
-        muscleLength[1] = ((2 * PI * shaftRadius * encoderData2[0] / 365) - muscleLengthOffset[1]);
-        muscleLength[1] = encoderBias[1] + muscleLength[1] *encoderGain[1];
-
-        muscleLength[2] = ((2 * PI * shaftRadius * encoderData3[0] / 365) - muscleLengthOffset[2]);
-        muscleLength[2] = encoderBias[2] + muscleLength[2] *encoderGain[2];
-
-        muscleVel[0] = (muscleLength[0] -  muscleLengthPreviousTick[0]) / (tock - tick);
-        muscleVel[1] = (muscleLength[1] -  muscleLengthPreviousTick[1]) / (tock - tick);
-
-        muscleLengthPreviousTick[0] = muscleLength[0];
-        muscleLengthPreviousTick[1] = muscleLength[1];
-        
-        loadCellData[0] = (loadCellData[0] * loadCellScale1) - loadCellOffset1;
-        loadCellData[1] = (loadCellData[1] * loadCellScale2) - loadCellOffset2;
-        loadCellData[2] = (loadCellData[2] * loadCellScale3) - loadCellOffset3;
-
-        
-        if(newPdgm_Flag)
+        for (int i=0; i < NUMBER_OF_MUSCLES; i++)
         {
-            //errorForce[0] = newPdgm_ref[1] - loadCellData[0];
-            //errorForce[1] = newPdgm_ref[0] - loadCellData[1];
-            //errorForce[2] = newPdgm_ref[0] - loadCellData[2];
-            motorRef[0] = newPdgm_ref[1];
-            motorRef[1] = newPdgm_ref[0];
-            motorRef[2] = newPdgm_ref[0];
-            
+            errorForce[i] = motorRef[i] - loadCellData[i];
+            integral[i] = integral[i] + errorForce[i] * (tock - tick);
+            motorCommand[i] = integral[i] * I;
+            if (motorCommand[i] > motorMaxVoltage)
+                motorCommand[i] = motorMaxVoltage;
+            if (motorCommand[i] < motorMinVoltage)
+                motorCommand[i] = motorMinVoltage;
         }
-        errorForce[0] = motorRef[0] - loadCellData[0];
-        errorForce[1] = motorRef[1] - loadCellData[1];
-        errorForce[2] = motorRef[2] - loadCellData[2];
-
-        integral[0] = integral[0] + errorForce[0] * (tock - tick);
-        integral[1] = integral[1] + errorForce[1] * (tock - tick);
-        integral[2] = integral[2] + errorForce[2] * (tock - tick);
-
-        motorCommand[0] = integral[0] * I;
-        motorCommand[1] = integral[1] * I;
-        motorCommand[2] = integral[2] * I;
-
-        motorCommand[3] = EMG;
-        if (motorCommand[0] > motorMaxVoltage)
-            motorCommand[0] = motorMaxVoltage;
-        if (motorCommand[0] < motorMinVoltage)
-            motorCommand[0] = motorMinVoltage;
-        if (motorCommand[1] > motorMaxVoltage)
-            motorCommand[1] = motorMaxVoltage;
-        if (motorCommand[1] < motorMinVoltage)
-            motorCommand[1] = motorMinVoltage;
-        //printf("F1: %+6.2f; F2: %+6.2f;L1: %+6.2f; L2: %+6.2f;, Dyn: %d, Sta: %d, \r",loadCellData[0],loadCellData[1],muscleLength[0],muscleLength[1],gammaDynamic1, gammaStatic1);
-        printf("LC1: %+4.2f; LC2: %+4.2f; LC31: %+4.2f; MR1: %+4.2f; MR2: %+4.2f, MR3: %+4.2f, \r",loadCellData[0],loadCellData[1],loadCellData[2],motorRef[0], motorRef[1], motorRef[2]);
-        //printf("F1: %+6.2f; F2: %+6.2f;MtrCmd1: %010d, MtrCmd2: %010d\r",loadCellData[0],loadCellData[1], motorCommand[0], motorCommand[1]);
-        //printf("Mtr1: %020d, Mtr2: %020d\r\r",motorCommand[0], motorCommand[1]);
+        printf("LC1: %+4.2f; MR1: %+4.2f, \r",loadCellData[0],motorRef[0]);
         ReleaseMutex( hIOMutex);
-        //fprintf(dataFile,"%.3f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%d\n",tock,loadCellData[0],loadCellData[1],motorRef[0],motorRef[1], muscleLength[0], muscleLength[1], muscleVel[0],muscleVel[1], muscleEMG[0], muscleEMG[1], isLate);
-        //fprintf(dataFile,"%.3f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%d,%d,%d\n",tock,loadCellData[0],loadCellData[1], muscleLength[0], muscleLength[1], muscleVel[0],muscleVel[1], muscleEMG[0], muscleEMG[1], gammaStatic, gammaDynamic, isLate);
-        //fprintf(dataFile,"%.3f,%.6f,%.6f,%.6f,%.6f,%d,%d,%d\n",tock, muscleLength[0], muscleLength[1], muscleEMG[0], muscleEMG[1], gammaStatic, gammaDynamic, isLate);
-        sprintf(dataSample,"%.3f,%.1f,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",tock,loadCellData[3],expProtocol,muscleLength[0], muscleLength[1], muscleLength[2], loadCellData[0],loadCellData[1],loadCellData[2]);
-        if (dataAcquisitionFlag[0]){
-            sprintf(dataTemp,",%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",motorRef[0],motorRef[1],motorRef[2],motorCommand[0],motorCommand[1],motorCommand[2]);
+        sprintf(dataSample,"%.3f",tock);
+        if (dataAcquisitionFlag[0])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+                sprintf(dataTemp,",%.6f",loadCellData[i]);
             strcat (dataSample, dataTemp);
         }
-        if (dataAcquisitionFlag[1]){
-            sprintf(dataTemp,",%.6f,%.6f",muscleEMG[0], muscleEMG[1]);
+        if (dataAcquisitionFlag[1])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+                sprintf(dataTemp,",%.6f",encoderData[i]);
             strcat (dataSample, dataTemp);
         }
-         if (dataAcquisitionFlag[2]){
-            sprintf(dataTemp,",%.6f,%.6f",spindleIa[0], spindleIa[1]);
+        if (dataAcquisitionFlag[2])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+                sprintf(dataTemp,",%.6f",motorRef[i]);
             strcat (dataSample, dataTemp);
         }
-        if (dataAcquisitionFlag[3]){
-            sprintf(dataTemp,",%.6f,%.6f",spindleII[0], spindleII[1]);
+        if (dataAcquisitionFlag[3])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+                sprintf(dataTemp,",%.6f",motorCommand[i]);
             strcat (dataSample, dataTemp);
         }
-        if (dataAcquisitionFlag[4]){
-            sprintf(dataTemp,",%d,%d",muscleSpikeCount[0], muscleSpikeCount[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[5]){
-            sprintf(dataTemp,",%u,%u",raster_MN_1[0], raster_MN_1[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[6]){
-            sprintf(dataTemp,",%u,%u",raster_MN_2[0], raster_MN_2[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[7]){
-            sprintf(dataTemp,",%u,%u",raster_MN_3[0], raster_MN_3[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[8]){
-            sprintf(dataTemp,",%u,%u",raster_MN_4[0], raster_MN_4[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[9]){
-            sprintf(dataTemp,",%u,%u",raster_MN_5[0], raster_MN_5[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[10]){
-            sprintf(dataTemp,",%u,%u",raster_MN_6[0], raster_MN_6[1]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[11]){
-            cortexDrive[0] = max((cortexVoluntaryAmp -0) * sin (2 * 3.1416 * cortexVoluntaryFreq * tick), 0);
-            cortexDrive[1] = max((cortexVoluntaryAmp -0) * sin (2 * 3.1416 * cortexVoluntaryFreq * tick + 3.1416), 0);
-        }
+
         //sprintf(dataTemp,",%d,%d,%d,%d,%.3f,%.3f,%d\n",gammaStatic1, gammaDynamic1, gammaStatic2, gammaDynamic2, cortexDrive[0], cortexDrive[1],newTrial);
         sprintf(dataTemp,"\n");
-        if (trialTrigger == 1){
-            expProtocoAdvance = 1;
-            trialTrigger = 0;
-        }
-        if (trialTrigger == 2){
-            expProtocoAdvance = 10;
-            trialTrigger = 0;
-        }
-        if (trialTrigger == 3){
-            expProtocoAdvance = 11;
-            trialTrigger = 0;
-        }
-        expProtocol = 0;
-        switch(expProtocoAdvance){
-            case 1:
-                expProtocol = -1000;
-                expProtocoAdvance = 2;
-                break;
-            case 2:
-                expProtocol = gammaDynamic1;
-                expProtocoAdvance = 3;
-                break;
-            case 3:
-                expProtocol = gammaStatic1;
-                expProtocoAdvance = 4;
-                break;
-            case 4:
-                expProtocol =  cortexDrive[0];
-                expProtocoAdvance = 5;
-                break;
-            case 5:
-                expProtocol = gammaDynamic2;
-                expProtocoAdvance = 6;
-                break;
-            case 6:
-                expProtocol = gammaStatic2;
-                expProtocoAdvance = 7;
-                break;
-            case 7:
-                expProtocol =  cortexDrive[1];
-                expProtocoAdvance = 8;
-                break;
-            case 8: 
-                expProtocol = angle;
-                expProtocoAdvance = 9;
-                break;
-            case 9:
-                expProtocol = velocity;
-                expProtocoAdvance = 0;
-                break;
-            case 10:
-                expProtocol = -1;
-                expProtocoAdvance = 0;
-                break;
-            case 11:
-                expProtocol = -2;
-                expProtocoAdvance = 0;
-                break;
-        }
         strcat (dataSample, dataTemp);
         fprintf(dataFile,dataSample);
         tick = timeData.getCurrentTime();
@@ -522,7 +352,44 @@ int motorControl::createDataEnable()
 {
     dataEnable = 0x01;
 }
-int createPortNumber(int hardware,int index,char * portNumber,char * channelDescription)
+int motorControl::createPortNumber(int hardware,int index,char * portNumber,char * channelDescription)
 {
     //TBD
 }
+int motorControl::createWindingUpCommand()
+{
+    for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
+    {
+        windingUpCmnd[i] = 0.5;
+    }
+}
+int motorControl::createFileName(char * fileName,tm * timePtr)
+{
+    sprintf_s(
+            fileName,
+            "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
+            timePtr->tm_year+1900, 
+            timePtr->tm_mon+1, 
+            timePtr->tm_mday, 
+            timePtr->tm_hour, 
+            timePtr->tm_min, 
+            timePtr->tm_sec
+            );
+}
+int motorControl::scaleMuscleLengthData(float64 *encoderData)
+{
+    for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
+    {
+        encoderData[i] = (2 * PI * shaftRadius * encoderData[i] / 365);
+        encoderData[i] = encoderBias + encoderData[0] *encoderGain;
+    }
+    return 0;
+}
+int motorControl::scaleloadCellData(float64 *loadCellData)
+{
+    for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
+        loadCellData[i] = (loadCellData[i] * loadCellScale[i]) - loadCellOffset[i];
+}
+
+
+ 
