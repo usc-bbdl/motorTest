@@ -1,8 +1,8 @@
 #include <utilities.h>
 #include <stdio.h>
 #include <conio.h>
-//#include <dataOneSample.h>
-//#include <motorControl.h>
+#include <motorControl.h>
+
 //#include <expParadigmMuscleLengthCalibration.h>
 //#include <expParadigmServoPerturbation.h>
 //#include <expParadigmManualPerturbation.h>
@@ -15,8 +15,7 @@ int proceedState(int *state)
     int retVal = 0;
     int menu = 0;
     //static servoControl servo;
-    static dataOneSample loadCellOffsets;
-    static motorControl motors(loadCellOffsets.loadCell1,loadCellOffsets.loadCell2,loadCellOffsets.loadCell3);
+    static motorControl motors();
     //static expParadigmMuscleLengthCalibration paradigmMuscleLengthCalibration(&servo);
     //static expParadigmServoPerturbation paradigmServoPerturbation(loadCellOffsets.loadCell1,loadCellOffsets.loadCell2,&servo);
     static expParadigmManualPerturbation paradigmManualPerturbation;

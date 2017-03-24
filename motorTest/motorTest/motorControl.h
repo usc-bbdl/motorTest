@@ -8,8 +8,11 @@
 #include <process.h>
 #include <ctime>
 #include <time.h>
+
 class motorControl
 {
+    int errorMotorControl;
+    uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
     double I;
     time timeData;
@@ -17,8 +20,14 @@ class motorControl
     void controlLoop(void);
     HANDLE hIOMutex;
     bool live;
-    float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[[NUMBER_OF_MUSCLES];
+    float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[NUMBER_OF_MUSCLES], windingUpCmnd[NUMBER_OF_MUSCLES];
     char header[200];
+    int controlLoopParadigm;
+    int createHeader4DataFile();
+    int initializeTaskHandles();
+    int createDataEnable();
+    int createWindingUpCommand();
+    int createPortNumber(int,int,char *,char *);
 public:    
     motorControl();
     ~motorControl(void);

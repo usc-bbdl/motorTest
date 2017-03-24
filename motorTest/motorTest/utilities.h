@@ -6,8 +6,8 @@
 #include <stdio.h>
 #define TRUE  1
 #define FALSE 0
-#define NUMBER_OF_MUSCLES 1
 
+//Physical channel number
 const int loadCellSlotNumber = 5;
 const int motorAnalogOutSlotNumber = 2;
 const int motorEnableSlotNumber = 2;
@@ -18,12 +18,13 @@ const int motorAnalogOutChannelNumber[7] = {8, 9, 10, 11, 12, 13, 14};
 const int motorEncoderChannelNumber[7] = {0, 1, 2, 3, 4, 5 , 6};
 
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
+
+//constant numbers
 const int samplingFrequency = 1000;
 const double PI = 3.14159265358979323846;
-const double shaftRadius = 0.003;// motor shaft radius in cm
-const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test with weights
 
-const int sampleFreq = 50000;
+
+//constant numbers for hardware
 const double motorMinVoltage = -7;
 const double motorMaxVoltage = 7;
 const int messageMinVoltage = 0;
@@ -31,6 +32,17 @@ const double messageMaxVoltage = 0.03;
 const double loadCellMinVoltage = -10;
 const double loadCellMaxVoltage = +10;
 const int encoderPulsesPerRev = 500;
+const double shaftRadius = 0.003;// motor shaft radius in cm
+const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test with weights
+
+#define NUMBER_OF_MUSCLES 1
+//State machine and paradigm
+
+#define MOTOR 0
+#define LOAD_CELL 1
+#define ENCODER 2
+#define MOTOR_ENABLE 3
+#define ENCODER_MOTOR_SYNC 4
 
 #define     STATE_INIT 0
 #define     STATE_WINDING_UP 1
@@ -42,6 +54,9 @@ const int encoderPulsesPerRev = 500;
 #define     STATE_RUN_PARADIGM_VOLUNTARY_MOVEMENT 7
 #define     STATE_SHUTTING_DOWN 8
 #define     STATE_RUN_PARADIGM_CDMRP_IMPLANT 9
+
+#define     OPEN_LOOP 0
+#define     CLOSED_LOOP 0
 
 extern int dataAcquisitionFlag[12];
 int proceedState(int *);
