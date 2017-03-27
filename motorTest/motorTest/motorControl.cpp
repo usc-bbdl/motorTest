@@ -17,7 +17,16 @@ motorControl::motorControl()
     encoderBias = 0;
     encoderGain = 1;
     for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
+    {
         loadCellOffset[i] = 0;
+        loadCellData[i] = 0.0;
+        motorRef[i]= 0.0;
+        muscleLength[i] = 0.0;
+        motorCommand[i] = 0.0;
+    }
+    tick=0.0;
+    tock=0.0;
+    sprintf(dataSample,"");
 }
 motorControl::~motorControl()
 {
@@ -29,7 +38,6 @@ motorControl::~motorControl()
 
 int motorControl::motorEnable()
 {
-    
     char        errBuff[2048]={'\0'};
     int32       error=0;
     float64 zeroVoltages[NUMBER_OF_MUSCLES]={0.0},zeroVoltage={0.0};
@@ -65,9 +73,7 @@ int motorControl::motorWindUp()
         DAQmxErrChk (DAQmxWriteAnalogF64(motorTaskHandle,1,FALSE,10,DAQmx_Val_GroupByChannel,windingUpCmnd,NULL,NULL));
         Sleep(500);
         isWindUp = TRUE;
-
         DAQmxStopTask(motorTaskHandle);
-        
         printf("Windup Pass.\n");
     }else  printf("Motors must be first enabled prior to winding up.\n");
 Error:
@@ -93,11 +99,11 @@ void motorControl::controlLoop(void)
     float cotexDrive = 0.0;
     bool firstSample = TRUE;
     bool32 isLate = {0};
-    double tick=0.0,tock=0.0;
-    float64 motorCommand[NUMBER_OF_MUSCLES]={0.0},errorForce[NUMBER_OF_MUSCLES]= {0.0},integral[NUMBER_OF_MUSCLES]={0};
-    float64 loadCellData[NUMBER_OF_MUSCLES]={0.0}, motorRef[NUMBER_OF_MUSCLES]={0.0}, muscleLength[NUMBER_OF_MUSCLES]={0.0};
+    float64 errorForce[NUMBER_OF_MUSCLES]= {0.0},integral[NUMBER_OF_MUSCLES]={0};
+    
+    
     FILE *dataFile;
-    char fileName[200], dataSample[600]="", dataTemp[100]="", errBuff[2048]={'\0'};
+    char fileName[200], dataTemp[100]="", errBuff[2048]={'\0'};
 
     time_t t = time(NULL);
     tm* timePtr = localtime(&t);
@@ -155,38 +161,9 @@ void motorControl::controlLoop(void)
         }
         printf("LC1: %+4.2f; MR1: %+4.2f, \r",loadCellData[0],motorRef[0]);
         ReleaseMutex( hIOMutex);
-        sprintf(dataSample,"%.3f",tock);
-        if (dataAcquisitionFlag[0])
-        {
-            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
-                sprintf(dataTemp,",%.6f",loadCellData[i]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[1])
-        {
-            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
-                sprintf(dataTemp,",%.6f",encoderData[i]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[2])
-        {
-            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
-                sprintf(dataTemp,",%.6f",motorRef[i]);
-            strcat (dataSample, dataTemp);
-        }
-        if (dataAcquisitionFlag[3])
-        {
-            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
-                sprintf(dataTemp,",%.6f",motorCommand[i]);
-            strcat (dataSample, dataTemp);
-        }
-
-        //sprintf(dataTemp,",%d,%d,%d,%d,%.3f,%.3f,%d\n",gammaStatic1, gammaDynamic1, gammaStatic2, gammaDynamic2, cortexDrive[0], cortexDrive[1],newTrial);
-        sprintf(dataTemp,"\n");
-        strcat (dataSample, dataTemp);
+        createDataSampleString();
         fprintf(dataFile,dataSample);
         tick = timeData.getCurrentTime();
-
     }
 
     DAQmxStopTask(motorTaskHandle);
@@ -214,6 +191,46 @@ Error:
 		printf("DAQmx Error: %s\n",errBuff);
         printf("Motor control Error\n");
 	}
+}
+void motorControl::createDataSampleString()
+{
+    char dataTemp[100]="";
+    sprintf(dataSample,"%.3f",tock);
+        if (dataAcquisitionFlag[0])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            {
+                sprintf(dataTemp,",%.6f",loadCellData[i]);
+                strcat (dataSample, dataTemp);
+            }
+        }
+        if (dataAcquisitionFlag[1])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            {
+                sprintf(dataTemp,",%.6f",encoderData[i]);
+                strcat (dataSample, dataTemp);
+            }
+        }
+        if (dataAcquisitionFlag[2])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            {
+                sprintf(dataTemp,",%.6f",motorRef[i]);
+                strcat (dataSample, dataTemp);
+            }
+        }
+        if (dataAcquisitionFlag[3])
+        {
+            for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            {
+                sprintf(dataTemp,",%.6f",motorCommand[i]);
+                strcat (dataSample, dataTemp);
+            }
+        }
+
+        sprintf(dataTemp,"\n");
+        strcat (dataSample, dataTemp);
 }
 
 int motorControl::motorControllerStart()
