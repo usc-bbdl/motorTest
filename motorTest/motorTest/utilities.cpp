@@ -15,14 +15,14 @@ int proceedState(int *state)
     int retVal = 0;
     int menu = 0;
     //static servoControl servo;
-    static motorControl motors();
+    static motorControl motors;
     //static expParadigmMuscleLengthCalibration paradigmMuscleLengthCalibration(&servo);
     //static expParadigmServoPerturbation paradigmServoPerturbation(loadCellOffsets.loadCell1,loadCellOffsets.loadCell2,&servo);
-    static expParadigmManualPerturbation paradigmManualPerturbation;
-    static expParadigmVoluntaryMovement paradigmVoluntaryMovement(&motors);
+//    static expParadigmManualPerturbation paradigmManualPerturbation;
+//    static expParadigmVoluntaryMovement paradigmVoluntaryMovement(&motors);
     //static FPGAControl bicepFPGA(BICEP,&motors);
     //static FPGAControl tricepFPGA(TRICEP,&motors);
-    static expParadigmCDMRPimplant paradigmCDMRPimplant;
+//    static expParadigmCDMRPimplant paradigmCDMRPimplant;
 
     switch(*state)
     {
@@ -41,7 +41,7 @@ int proceedState(int *state)
         //Connect the Neural FPGA and DAQ, Start controlling muscle force
         motors.motorControllerStart();
         Sleep(1000);
-        motors.resetMuscleLength = TRUE;
+//        motors.resetMuscleLength = TRUE;
         printf("Closed-Loop ; Next stage is Experiment Paradigm\n");
         *state = STATE_CLOSED_LOOP;
         break;
@@ -124,7 +124,7 @@ int proceedState(int *state)
         break;
     case STATE_RUN_PARADIGM_CDMRP_IMPLANT:
         //paradigmCDMRPimplant.readData();
-        retVal = paradigmCDMRPimplant.startParadigm(&motors);
+//        retVal = paradigmCDMRPimplant.startParadigm(&motors);
         if(retVal != -1)
             *state = STATE_CLOSED_LOOP;
             else {
@@ -155,20 +155,3 @@ void waitkey() {
 }
 
 
-int ReInterpret(float32 in, int32 *out)
-{
-    memcpy(out, &in, sizeof(int32));
-    return 0;
-}
-
-int ReInterpret(int32 in, int32 *out)
-{
-    memcpy(out, &in, sizeof(int32));
-    return 0;
-}
-
-int ReInterpret(int in, float *out)
-{
-    memcpy(out, &in, sizeof(float));
-    return 0;
-}

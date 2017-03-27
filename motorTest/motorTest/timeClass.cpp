@@ -1,4 +1,9 @@
-#include "time.h"
+#include "timeClass.h"
+#include <Windows.h>
+#include <stdio.h>
+#include <math.h>
+#include <algorithm>
+#include <ctime>
 timeClass::timeClass(void)
 {
     QueryPerformanceFrequency(&frequency);

@@ -4,8 +4,7 @@
 #include <math.h>
 #include <NIDAQmx.h>
 #include <stdio.h>
-#define TRUE  1
-#define FALSE 0
+
 
 //Physical channel number
 const int loadCellSlotNumber = 5;
@@ -58,7 +57,7 @@ const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test
 #define     OPEN_LOOP 0
 #define     CLOSED_LOOP 0
 
-extern int dataAcquisitionFlag[12];
+extern int dataAcquisitionFlag[4];
 int proceedState(int *);
 
 

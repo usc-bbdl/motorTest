@@ -101,7 +101,18 @@ void motorControl::controlLoop(void)
 
     time_t t = time(NULL);
     tm* timePtr = localtime(&t);
-    createFileName(fileName,timePtr);
+    //createFileName(fileName,timePtr);
+        sprintf_s(
+            fileName,
+            "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
+            timePtr->tm_year+1900, 
+            timePtr->tm_mon+1, 
+            timePtr->tm_mday, 
+            timePtr->tm_hour, 
+            timePtr->tm_min, 
+            timePtr->tm_sec
+            );
+
     dataFile = fopen(fileName,"w");
     fprintf(dataFile,header);
     
@@ -351,10 +362,12 @@ Error:
 int motorControl::createDataEnable()
 {
     dataEnable = 0x01;
+    return 0;
 }
 int motorControl::createPortNumber(int hardware,int index,char * portNumber,char * channelDescription)
 {
     //TBD
+    return 0;
 }
 int motorControl::createWindingUpCommand()
 {
@@ -362,10 +375,11 @@ int motorControl::createWindingUpCommand()
     {
         windingUpCmnd[i] = 0.5;
     }
+    return 0;
 }
 int motorControl::createFileName(char * fileName,tm * timePtr)
 {
-    sprintf_s(
+ /**   sprintf_s(
             fileName,
             "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
             timePtr->tm_year+1900, 
@@ -375,6 +389,8 @@ int motorControl::createFileName(char * fileName,tm * timePtr)
             timePtr->tm_min, 
             timePtr->tm_sec
             );
+            **/
+    return 0;
 }
 int motorControl::scaleMuscleLengthData(float64 *encoderData)
 {
@@ -389,6 +405,7 @@ int motorControl::scaleloadCellData(float64 *loadCellData)
 {
     for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
         loadCellData[i] = (loadCellData[i] * loadCellScale[i]) - loadCellOffset[i];
+    return 0;
 }
 
 
