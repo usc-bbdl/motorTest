@@ -4,7 +4,7 @@
 #include "motorControl.h"
 #include "scanMotorVoltage.h"
 
-motorControl motors; 
+motorControl motors;
 scanMotorVoltage scanMotorVoltageObject(& motors);
 int proceedState(int *state)
 {

@@ -21,16 +21,13 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utilities.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="motorControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="timeClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scanMotorVoltage.cpp">
+    <ClCompile Include="generalExperimentalParadigm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,7 +41,7 @@
     <ClInclude Include="timeClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scanMotorVoltage.h">
+    <ClInclude Include="generalExperimentalParadigm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

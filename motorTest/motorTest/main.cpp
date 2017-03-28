@@ -1,16 +1,11 @@
-//
 #include <stdio.h>
 #include <windows.h>
 #include <iostream>
 #include <conio.h>
-#include <utilities.h>
-//#include <servoControl.h>
+#include "generalExperimentalParadigm.h"
 int main()
 { 
-    printf("Press 'Spc' to move forward\n\n");
-    printf("Press 'Esc' to terminate\n");
-    printf("\nInitialization; Next stage is Motors Winding up\n");
-    int gExperimentState = STATE_INIT;
+    generalExperimentalParadigm experiment;
     bool stayInTheLoop = TRUE;
     while(stayInTheLoop)
     {
@@ -19,13 +14,11 @@ int main()
             key = getch();
             switch ( key ) 
             {
-                case 27:        // Terminate Anytime when Escape Is Pressed...
-                    stayInTheLoop = FALSE;
-                    gExperimentState = STATE_SHUTTING_DOWN;
-                    proceedState(&gExperimentState);
+                case 27:        //Terminate Anytime when Escape Is Pressed...
+                    experiment.endExperiment();
                     break;
-                case ' ':       // Move forward in the state machine
-                    proceedState(&gExperimentState);
+                case ' ':       //Move forward in running the experiment
+                    experiment.nextState();
                     break;
            }
         }

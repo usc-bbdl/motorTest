@@ -441,7 +441,7 @@ int motorControl::scaleloadCellData(float64 *loadCellData)
     return 0;
 }
 void motorControl::updateMotorRef(float64 *a){
-    for (int i =0;i<MUSCLE_NUM;i++)
+    for (int i =0;i<NUMBER_OF_MUSCLES;i++)
     {
         motorRef[i] = a[i];
     }
