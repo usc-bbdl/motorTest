@@ -31,6 +31,8 @@ motorControl::motorControl()
     bool flag[4] = {true};
     setDataAcquisitionFlag(flag);
     closedLoop = true;
+    newTrial = 0;
+    experimentControl = 0;
 }
 void motorControl::setDataAcquisitionFlag(bool flag[])
 {
@@ -200,7 +202,21 @@ Error:
 void motorControl::createDataSampleString()
 {
     char dataTemp[100]="";
-    sprintf(dataSample,"%.3f",tock);
+    static int k;
+    if ((newTrial) | (k>0))
+    {
+        experimentControl = paradigm [k];
+        k = k + 1;
+        if (k == 4)
+            k = 0;
+    }
+    else
+    {
+        k = 0;
+        experimentControl = 0;
+    }
+    
+    sprintf(dataSample,"%.3f,%d",tock,experimentControl);
         if (dataAcquisitionFlag[0])
         {
             for (int i=0; i < NUMBER_OF_MUSCLES; i++)
@@ -450,10 +466,15 @@ int motorControl::scaleloadCellData(float64 *loadCellData)
         loadCellData[i] = (loadCellData[i] * loadCellScale[i]) - loadCellOffset[i];
     return 0;
 }
-void motorControl::updateMotorRef(float64 *a){
+void motorControl::updateMotorRef(float64 *a,int newTrial, double * paradigm){
     for (int i =0;i<NUMBER_OF_MUSCLES;i++)
     {
         motorRef[i] = a[i];
+    }
+    this->newTrial = newTrial;
+    for (int i =0;i<5;i++)
+    {
+        this->paradigm[i] = paradigm[i];
     }
 }
 

@@ -11,10 +11,10 @@
 
 class motorControl
 {
-    int errorMotorControl;
+    int errorMotorControl, experimentControl, newTrial;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I, encoderBias, encoderGain;
+    double I, encoderBias, encoderGain, paradigm[5];
     timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);
@@ -23,7 +23,7 @@ class motorControl
     double tick,tock;
     float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[NUMBER_OF_MUSCLES], windingUpCmnd[NUMBER_OF_MUSCLES];
     float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES];
-    char header[200], dataSample[600], fileName[200];;
+    char header[200], dataSample[600], fileName[200];
     int controlLoopParadigm;
     int createHeader4DataFile();
     int initializeTaskHandles();
@@ -45,7 +45,7 @@ public:
     int motorControllerStart();
     int motorControllerEnd();
     double getTime();
-    void updateMotorRef(float64 *);
+    void updateMotorRef(float64 *, int , double *);
     void setDataAcquisitionFlag(bool *);
     void setOpenLoop();
 };

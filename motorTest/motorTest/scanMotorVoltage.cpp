@@ -30,8 +30,6 @@ void scanMotorVoltage::setSinValues(float64 sinValues[])
     offset =    sinValues[3];
     flag =      sinValues[4];
 }
-
-
 void scanMotorVoltage::startScan()
 {
     live = TRUE;
@@ -56,6 +54,7 @@ void scanMotorVoltage::controlLoop(void){
             startSinVoltageScan();
         else
             startNoiseVoltageScan();
+        live = FALSE;
     }
 }
 
@@ -69,17 +68,25 @@ int scanMotorVoltage::startSinVoltageScan(){
     }
     generateSinusoidAmplitudes();
     generateSinusoidFrequencies();
-    int cycle = 0;
-    double sinPeriod=0;
+    int cycle = 0, newTrial = 0;
+    double sinPeriod=0, paradigm[5] = {0.0};
     for (int i = 0; i < numOfOffsetVoltage; i ++){
         for(int j = 0; j < numOfSinFreq; j++)
         {
+            newTrial = 1;
             cycle = 0;
+            paradigm[0] = 1000;
+            paradigm[1] = 1;
+            paradigm[2] = voltOffset[i];
+            paradigm[3] = sinFreq[j];
+            paradigm[4] = sinAmp;
             do{
                 tick = timeData.getCurrentTime();
                 sinPeriod = 1 / sinFreq[j];
-                motorRef[i] = voltOffset[i] + sinAmp * sin (2 * PI * sinFreq[j] * tick);
-                motorsScanVoltage->updateMotorRef(motorRef);
+                for (int k = 0 ; k < NUMBER_OF_MUSCLES; k++)
+                    motorRef[k] = voltOffset[i] + sinAmp * sin (2 * PI * sinFreq[j] * tick);
+                motorsScanVoltage->updateMotorRef(motorRef, newTrial, paradigm);
+                newTrial = 0;
                 Sleep(10);
                 if (tick>sinPeriod)
                 {
