@@ -30,6 +30,7 @@ motorControl::motorControl()
     //Flag for data acquision, the sequence is [loadcell, motorVoltage, motorEncoder, motorRef]
     bool flag[4] = {true};
     setDataAcquisitionFlag(flag);
+    closedLoop = true;
 }
 void motorControl::setDataAcquisitionFlag(bool flag[])
 {
@@ -148,7 +149,16 @@ void motorControl::controlLoop(void)
         }
         for (int i=0; i < NUMBER_OF_MUSCLES; i++)
         {
-            motorCommand[i] =motorRef[i];
+            if (closedLoop)
+            {
+                errorForce[i] = motorRef[i] - loadCellData[i];
+                integral[i] = integral[i] + errorForce[i] * (tock - tick);
+                motorCommand[i] = integral[i] * I;
+            }
+            else
+            {
+                motorCommand[i] = motorRef[i];
+            }
             if (motorCommand[i] > motorMaxVoltage)
                 motorCommand[i] = motorMaxVoltage;
             if (motorCommand[i] < motorMinVoltage)
@@ -447,4 +457,7 @@ void motorControl::updateMotorRef(float64 *a){
     }
 }
 
- 
+void  motorControl::setOpenLoop()
+{
+    closedLoop = false;
+}

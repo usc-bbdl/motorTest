@@ -19,7 +19,7 @@ class motorControl
     static void motorControlLoop(void*);
     void controlLoop(void);
     HANDLE hIOMutex;
-    bool live;
+    bool live, closedLoop;
     double tick,tock;
     float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[NUMBER_OF_MUSCLES], windingUpCmnd[NUMBER_OF_MUSCLES];
     float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES];
@@ -47,7 +47,6 @@ public:
     double getTime();
     void updateMotorRef(float64 *);
     void setDataAcquisitionFlag(bool *);
-
-
+    void setOpenLoop();
 };
 #endif

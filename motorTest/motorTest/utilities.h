@@ -43,15 +43,16 @@ const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test
 #define MOTOR_ENABLE 3
 #define ENCODER_MOTOR_SYNC 4
 
-#define     STATE_INIT 0
-#define     STATE_WINDING_UP 1
-#define     STATE_OPEN_LOOP 2
-#define     STATE_CLOSED_LOOP 3
-#define     STATE_SINUSOIDAL_VOLTAGE 4
-#define     STATE_WHITE_NOISE 5
-
-#define     STATE_SHUTTING_DOWN 6
-
+#define     STATE_PRE_INIT 0
+#define     STATE_POST_INIT 1
+#define     STATE_PRE_WINDING_UP 1
+#define     STATE_POST_WINDING_UP 2
+#define     STATE_PRE_DATA_ACQUISITION 2
+#define     STATE_POST_DATA_ACQUISITION 3
+#define     STATE_PRE_CUSTOMIZED_PARADIGM 3
+#define     STATE_POST_CUSTOMIZED_PARADIGM 4
+#define     STATE_PRE_SHUTDOWN 4
+#define     STATE_POST_SHUTDOWN 5
 
 #define     OPEN_LOOP 0
 #define     CLOSED_LOOP 0
