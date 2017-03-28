@@ -81,12 +81,14 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="customizedExperimentalParadigm.cpp" />
     <ClCompile Include="generalExperimentalParadigm.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="motorControl.cpp" />
     <ClCompile Include="timeClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="customizedExperimentalParadigm.h" />
     <ClInclude Include="generalExperimentalParadigm.h" />
     <ClInclude Include="motorControl.h" />
     <ClInclude Include="timeClass.h" />
