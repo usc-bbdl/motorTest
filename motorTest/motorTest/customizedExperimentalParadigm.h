@@ -3,6 +3,7 @@
 #include "motorControl.h"
 
 class customizedExperimentalParadigm{
+    int experimentalState;
     motorControl *motors;
 public:
     void initialize(motorControl*);

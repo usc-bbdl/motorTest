@@ -1,9 +1,55 @@
 #include "customizedExperimentalParadigm.h"
+#include "scanMotorVoltage.h"
 void customizedExperimentalParadigm::initialize(motorControl* temp)
 {
     motors = temp;
 }
 int customizedExperimentalParadigm::runExperiment()
 {
+    scanMotorVoltage scanMotorVoltageObject(motors);
+    const int STATE_EXIT = 0;
+    const int STATE_SINUSOIDAL_VOLTAGE = 1;
+    const int STATE_WHITE_NOISE = 2;
+    int menu = 0;
+    float64 sinValues[4]; //These are the values used to specify the sin wave parameters
+    bool showMenu = true;
+    while (showMenu)
+    {
+        printf("\n\nWhat Paradigm do you want to run?\n");
+        printf("\t[0] Shut down\n");
+        printf("\t[1] Sinusoidal Voltage\n");
+        printf("\t[2] White Noise Voltage\n");
+        do{
+            scanf("%d", &menu);
+            if (!((menu <= 2) || (menu >= 0)))
+                printf("Wrong input! try Again.\n");
+        }while (!((menu <= 2) || (menu >= 0)));
+
+        switch(menu)
+        {
+            case 1:
+                experimentalState = STATE_SINUSOIDAL_VOLTAGE;
+                printf("Sinusoidal Voltage Selected\n");
+                scanMotorVoltageObject.setSinusoidalScan();
+                scanMotorVoltageObject.startScan();
+                printf("Press Space to continue\n");
+                break;
+            case 2:
+                experimentalState = STATE_WHITE_NOISE;
+                printf("White Noice Selected\n");
+                scanMotorVoltageObject.setNoiseScan();
+                scanMotorVoltageObject.startScan();
+                printf("Press Space to continue\n");
+                break;
+
+            case 0:
+                experimentalState = STATE_EXIT;
+                printf("\nPress space to exit\n");
+                printf("Press Space to continue\n");
+                break;
+            default: break;
+        }
+    }
+   
     return 0;
 }

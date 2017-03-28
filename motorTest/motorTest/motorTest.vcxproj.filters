@@ -33,6 +33,9 @@
     <ClCompile Include="customizedExperimentalParadigm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scanMotorVoltage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="utilities.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="customizedExperimentalParadigm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scanMotorVoltage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
