@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <conio.h>
 #include <motorControl.h>
+#include "scanMotorVoltage.h"
 
 //#include <expParadigmMuscleLengthCalibration.h>
 //#include <expParadigmServoPerturbation.h>
@@ -9,20 +10,18 @@
 //#include <expParadigmVoluntaryMovement.h>
 //#include <FPGAControl.h>
 //#include <expParadigmCDMRPimplant.h>
+
 int dataAcquisitionFlag[4] = {1,1,1,1}; //force[0], motorEncoder[1], reference force[2], motor command [3]
+motorControl motors(); 
+scanMotorVoltage scanVoltageSpace(& motors);
+
+
 int proceedState(int *state)
 {
     int retVal = 0;
     int menu = 0;
-    //static servoControl servo;
+    float64 sinValues[4]; //These are the values used to specify the sin wave parameters
     static motorControl motors;
-    //static expParadigmMuscleLengthCalibration paradigmMuscleLengthCalibration(&servo);
-    //static expParadigmServoPerturbation paradigmServoPerturbation(loadCellOffsets.loadCell1,loadCellOffsets.loadCell2,&servo);
-//    static expParadigmManualPerturbation paradigmManualPerturbation;
-//    static expParadigmVoluntaryMovement paradigmVoluntaryMovement(&motors);
-    //static FPGAControl bicepFPGA(BICEP,&motors);
-    //static FPGAControl tricepFPGA(TRICEP,&motors);
-//    static expParadigmCDMRPimplant paradigmCDMRPimplant;
 
     switch(*state)
     {
@@ -30,61 +29,40 @@ int proceedState(int *state)
         printf("Motors Winding Up; Next stage is Open-Loop\n");
         motors.motorEnable();
         motors.motorWindUp();
-        *state = STATE_WINDING_UP;
-        break;
-    case STATE_WINDING_UP:
-        //Start Neural FPGA and Feeding muscle length data        
         *state = STATE_OPEN_LOOP;
-        printf("Open-Loop ; Next stage is Closed-Loop\n");
         break;
     case STATE_OPEN_LOOP:
         //Connect the Neural FPGA and DAQ, Start controlling muscle force
         motors.motorControllerStart();
         Sleep(1000);
 //        motors.resetMuscleLength = TRUE;
-        printf("Closed-Loop ; Next stage is Experiment Paradigm\n");
+        printf("Open-Loop ; Next stage is Experiment Paradigm\n");
         *state = STATE_CLOSED_LOOP;
         break;
     case STATE_CLOSED_LOOP:        
         printf("\n\nWhat Paradigm do you want to run?\n");
-        printf("\t[0] Exit Program\n");
-        printf("\t[1] Muscle Length Calibration\n");
-        printf("\t[2] Servo Perturbation\n");
-        printf("\t[3] Manual Perturbation\n");
-        printf("\t[4] Voluntary Movement\n");
-        printf("\t[5] CDMRP Implant\n\n User Input:");
+        printf("\t[0] Shut down\n");
+        printf("\t[1] Sinusoidal Voltage\n");
+        printf("\t[2] White Noise\n");
+        
         do{
             scanf("%d", &menu);
-            if (!((menu <= 5) || (menu >= 0)))
+            if (!((menu <= 1) || (menu >= 0)))
                 printf("Wrong input! try Again.\n");
-        }while (!((menu <= 5) || (menu >= 0)));
+        }while (!((menu <= 1) || (menu >= 0)));
         switch(menu)
         {
         case 1:
-            *state = STATE_PARADIGM_LENGTH_CALIBRATION;
-            printf("Muscle Length Calibration Selected\n");
+            *state = STATE_SINUSOIDAL_VOLTAGE;
+            printf("Sinusoidal Voltage Selected\n");
             printf("Press Space to continue\n");
             break;
         case 2:
-            *state = STATE_RUN_PARADIGM_SERVO_PERTURBATION;
-            printf("Servo Perturbation Selected\n");
+            *state = STATE_WHITE_NOISE;
+            printf("White Noice Selected\n");
             printf("Press Space to continue\n");
             break;
-        case 3:
-            *state = STATE_RUN_PARADIGM_MANUAL_PERTURBATION;
-            printf("Manual Perturbation Selected\n");
-            printf("Press Space to continue\n");
-            break;
-        case 4:
-            *state = STATE_RUN_PARADIGM_VOLUNTARY_MOVEMENT;
-            printf("Voluntary Movement Selected\n");
-            printf("Press Space to continue\n");
-            break;
-        case 5:
-            *state = STATE_RUN_PARADIGM_CDMRP_IMPLANT;
-            printf("CDMRP implant Selected\n");
-            printf("Press Space to continue\n");
-            break;
+
         case 0:
             *state = STATE_SHUTTING_DOWN;
             printf("\nPress space to shutdown\n");
@@ -93,54 +71,43 @@ int proceedState(int *state)
         default: break;
         }
 //        Sleep(500);
-//        paradigm.startParadigm(&bicepFPGA, &tricepFPGA, &motors);
         break;
-    case STATE_PARADIGM_LENGTH_CALIBRATION:
-        //retVal = paradigmMuscleLengthCalibration.startParadigm(&motors);
-        if(retVal != -1)
-            *state = STATE_CLOSED_LOOP;
-            else {
-                *state = STATE_SHUTTING_DOWN;
-                printf("\nPress space to shutdown\n");
-            }
+    case STATE_SINUSOIDAL_VOLTAGE:
+        sinValues[3] = true; //this is the flag that tells scanMotorVolage.cpp methods that a Sinusoidal Voltage scan should be done.
+       
+            printf("What frequency, amplitude and offset do you want (type three values separated by spaces)?\n");
+            do{// this is a do-while loop that enforces limits on sin wave specification values.
+                std::cin>>sinValues[0]>>sinValues[1]>>sinValues[2]; // frequency, amplitude, and offset.
+
+                if (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000))) // need to secify limits if any.
+                    printf("Wrong input! try Again.\n\a");
+
+            }while (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000)));
+
+        scanVoltageSpace.setSinValues(sinValues); // passes array address to function that sets the values.
+        scanVoltageSpace.startScan();
+
+        *state= STATE_CLOSED_LOOP;
         break;
-    case STATE_RUN_PARADIGM_SERVO_PERTURBATION:
-        //retVal = paradigmServoPerturbation.startParadigm(&bicepFPGA, &tricepFPGA, &motors);
-        if(retVal != -1)
-            *state = STATE_CLOSED_LOOP;
-            else {
-                *state = STATE_SHUTTING_DOWN;
-                printf("\nPress space to shutdown\n");
-            }
-        break;
-    case STATE_RUN_PARADIGM_MANUAL_PERTURBATION:
-        //retVal = paradigmManualPerturbation.startParadigm(&bicepFPGA, &tricepFPGA, &motors);
-        if(retVal != -1)
-            *state = STATE_CLOSED_LOOP;
-            else {
-                *state = STATE_SHUTTING_DOWN;
-                printf("\nPress space to shutdown\n");
-            }
-        break;
-    case STATE_RUN_PARADIGM_CDMRP_IMPLANT:
-        //paradigmCDMRPimplant.readData();
-//        retVal = paradigmCDMRPimplant.startParadigm(&motors);
-        if(retVal != -1)
-            *state = STATE_CLOSED_LOOP;
-            else {
-                *state = STATE_SHUTTING_DOWN;
-                printf("\nPress space to shutdown\n");
-            }
-        break;
-    case STATE_RUN_PARADIGM_VOLUNTARY_MOVEMENT:
-        //retVal = paradigmVoluntaryMovement.startParadigm(&bicepFPGA, &tricepFPGA, &motors);
-        if(retVal != -1)
-            *state = STATE_CLOSED_LOOP;
-            else {
-                *state = STATE_SHUTTING_DOWN;
-                printf("\nPress space to shutdown\n");
-            }
-        break;
+    case STATE_WHITE_NOISE:
+        sinValues[3] = false; //this is the flag that tells scanMotorVolage.cpp methods that a Sinusoidal Voltage scan should be done.
+
+            printf("What amplitude and offset do you want (type two values separated by spaces)?\n");
+            do{// this is a do-while loop that enforces limits on sin wave specification values.
+                sinValues[0] = 0.0; // setting to zero because this feature does not frequency.
+                std::cin>>sinValues[1]>>sinValues[2]; // frequency, amplitude, and offset.
+
+                if (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000))) // need to secify limits if any.
+                    printf("Wrong input! try Again.\n\a");
+
+            }while (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000)));
+
+        scanVoltageSpace.setSinValues(sinValues); // passes array address to function that sets the values.
+        scanVoltageSpace.startScan();
+
+    *state = STATE_CLOSED_LOOP;
+    break;
+    
     case STATE_SHUTTING_DOWN:
         printf("Shutting Down\n");
         motors.motorControllerEnd();

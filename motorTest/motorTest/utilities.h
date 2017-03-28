@@ -47,12 +47,11 @@ const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test
 #define     STATE_WINDING_UP 1
 #define     STATE_OPEN_LOOP 2
 #define     STATE_CLOSED_LOOP 3
-#define     STATE_PARADIGM_LENGTH_CALIBRATION 4
-#define     STATE_RUN_PARADIGM_SERVO_PERTURBATION 5
-#define     STATE_RUN_PARADIGM_MANUAL_PERTURBATION 6
-#define     STATE_RUN_PARADIGM_VOLUNTARY_MOVEMENT 7
-#define     STATE_SHUTTING_DOWN 8
-#define     STATE_RUN_PARADIGM_CDMRP_IMPLANT 9
+#define     STATE_SINUSOIDAL_VOLTAGE 4
+#define     STATE_WHITE_NOISE 5
+
+#define     STATE_SHUTTING_DOWN 6
+
 
 #define     OPEN_LOOP 0
 #define     CLOSED_LOOP 0

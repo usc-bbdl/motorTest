@@ -83,11 +83,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="motorControl.cpp" />
+    <ClCompile Include="scanMotorVoltage.cpp" />
     <ClCompile Include="timeClass.cpp" />
     <ClCompile Include="utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="motorControl.h" />
+    <ClInclude Include="scanMotorVoltage.h" />
     <ClInclude Include="timeClass.h" />
     <ClInclude Include="utilities.h" />
   </ItemGroup>

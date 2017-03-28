@@ -103,22 +103,10 @@ void motorControl::controlLoop(void)
     
     
     FILE *dataFile;
-    char fileName[200], dataTemp[100]="", errBuff[2048]={'\0'};
-
-    time_t t = time(NULL);
-    tm* timePtr = localtime(&t);
-    //createFileName(fileName,timePtr);
-        sprintf_s(
-            fileName,
-            "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
-            timePtr->tm_year+1900, 
-            timePtr->tm_mon+1, 
-            timePtr->tm_mday, 
-            timePtr->tm_hour, 
-            timePtr->tm_min, 
-            timePtr->tm_sec
-            );
-
+    char dataTemp[100]="", errBuff[2048]={'\0'};
+    
+    
+    createFileName();
     dataFile = fopen(fileName,"w");
     fprintf(dataFile,header);
     
@@ -133,7 +121,6 @@ void motorControl::controlLoop(void)
     float64 goffsetLoadCell[2]={0};
     while(live)
     {
-        DAQmxErrChk (DAQmxWriteDigitalU32(motorEnableHandle,1,1,10.0,DAQmx_Val_GroupByChannel,&dataEnable,NULL,NULL));
         WaitForSingleObject(hIOMutex, INFINITE);
         DAQmxErrChk(DAQmxWaitForNextSampleClock(loadCelltaskHandle,10, &isLate));
         DAQmxErrChk (DAQmxReadAnalogF64(loadCelltaskHandle,-1,10.0,DAQmx_Val_GroupByScanNumber,loadCellData,NUMBER_OF_MUSCLES,NULL,NULL));
@@ -151,9 +138,7 @@ void motorControl::controlLoop(void)
         }
         for (int i=0; i < NUMBER_OF_MUSCLES; i++)
         {
-            errorForce[i] = motorRef[i] - loadCellData[i];
-            integral[i] = integral[i] + errorForce[i] * (tock - tick);
-            motorCommand[i] = integral[i] * I;
+            motorCommand[i] =motorRef[i];
             if (motorCommand[i] > motorMaxVoltage)
                 motorCommand[i] = motorMaxVoltage;
             if (motorCommand[i] < motorMinVoltage)
@@ -383,7 +368,27 @@ int motorControl::createDataEnable()
 }
 int motorControl::createPortNumber(int hardware,int index,char * portNumber,char * channelDescription)
 {
-    //TBD
+    switch(hardware) 
+    {
+    case MOTOR:
+        sprintf(portNumber,"PXI1Slot%d/ao%d", motorAnalogOutSlotNumber,motorAnalogOutChannelNumber[index]);
+        sprintf(channelDescription,"motor%d",index);
+        break;
+    case LOAD_CELL:
+      sprintf(portNumber,"PXI1Slot%d/ai%d", loadCellSlotNumber,loadCellChannelNumber[index]);
+      sprintf(channelDescription,"loadcell%d",index);
+      break;
+    case ENCODER:
+      sprintf(portNumber,"PXI1Slot%d/ctr%d", motorEncoderSlotNumber,motorEncoderChannelNumber[index]);
+      sprintf(channelDescription,"encoder%d",index);
+      break;
+    case MOTOR_ENABLE:
+        sprintf(portNumber,"PXI1Slot%d/port%d", motorEnableSlotNumber,motorEnableChannelNumber);
+        break;
+    case ENCODER_MOTOR_SYNC:
+         sprintf(portNumber,"/PXI1Slot%d/ai/SampleClock",loadCellSlotNumber); 
+        break;
+    }
     return 0;
 }
 int motorControl::createWindingUpCommand()
@@ -394,19 +399,20 @@ int motorControl::createWindingUpCommand()
     }
     return 0;
 }
-int motorControl::createFileName(char * fileName,tm * timePtr)
+int motorControl::createFileName()
 {
- /**   sprintf_s(
-            fileName,
-            "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
-            timePtr->tm_year+1900, 
-            timePtr->tm_mon+1, 
-            timePtr->tm_mday, 
-            timePtr->tm_hour, 
-            timePtr->tm_min, 
-            timePtr->tm_sec
-            );
-            **/
+    time_t t = time(NULL);
+    tm* timePtr = localtime(&t);
+    sprintf_s(
+        fileName,
+        "C:\\data\\realTimeData%4d_%02d_%02d_%02d_%02d_%02d.txt",
+        timePtr->tm_year+1900, 
+        timePtr->tm_mon+1, 
+        timePtr->tm_mday, 
+        timePtr->tm_hour, 
+        timePtr->tm_min, 
+        timePtr->tm_sec
+        );
     return 0;
 }
 int motorControl::scaleMuscleLengthData(float64 *encoderData)
@@ -424,6 +430,11 @@ int motorControl::scaleloadCellData(float64 *loadCellData)
         loadCellData[i] = (loadCellData[i] * loadCellScale[i]) - loadCellOffset[i];
     return 0;
 }
-
+void motorControl::updateMotorRef(float64 *a){
+    for (int i =0;i<MUSCLE_NUM;i++)
+    {
+        motorRef[i] = a[i];
+    }
+}
 
  
