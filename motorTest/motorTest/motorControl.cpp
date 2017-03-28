@@ -27,6 +27,16 @@ motorControl::motorControl()
     tick=0.0;
     tock=0.0;
     sprintf(dataSample,"");
+    //Flag for data acquision, the sequence is [loadcell, motorVoltage, motorEncoder, motorRef]
+    bool flag[4] = {true};
+    setDataAcquisitionFlag(flag);
+}
+void motorControl::setDataAcquisitionFlag(bool flag[])
+{
+    dataAcquisitionFlag[LOADCELL_DAQ] = flag[0];
+    dataAcquisitionFlag[MOTOR_VOLTAGE_DAQ] = flag[1];
+    dataAcquisitionFlag[MOTOR_ENCODER_DAQ] = flag[2];
+    dataAcquisitionFlag[MOTOR_REF_DAQ] = flag[3];
 }
 motorControl::~motorControl()
 {

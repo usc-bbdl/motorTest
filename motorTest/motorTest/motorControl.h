@@ -34,6 +34,7 @@ class motorControl
     int scaleMuscleLengthData(float64 *);
     int scaleloadCellData(float64 *);
     void createDataSampleString();
+    int dataAcquisitionFlag[4];
 public:
     motorControl();
     ~motorControl(void);
@@ -45,6 +46,7 @@ public:
     int motorControllerEnd();
     double getTime();
     void updateMotorRef(float64 *);
+    void setDataAcquisitionFlag(bool *);
 
 
 };

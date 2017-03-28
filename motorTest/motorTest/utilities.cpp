@@ -4,21 +4,10 @@
 #include "motorControl.h"
 #include "scanMotorVoltage.h"
 
-//#include <expParadigmMuscleLengthCalibration.h>
-//#include <expParadigmServoPerturbation.h>
-//#include <expParadigmManualPerturbation.h>
-//#include <expParadigmVoluntaryMovement.h>
-//#include <FPGAControl.h>
-//#include <expParadigmCDMRPimplant.h>
-
-int dataAcquisitionFlag[4] = {1,1,1,1}; //force[0], motorEncoder[1], reference force[2], motor command [3]
 motorControl motors; 
 scanMotorVoltage scanMotorVoltageObject(& motors);
-
-
 int proceedState(int *state)
 {
-    int retVal = 0;
     int menu = 0;
     float64 sinValues[4]; //These are the values used to specify the sin wave parameters
     static motorControl motors;

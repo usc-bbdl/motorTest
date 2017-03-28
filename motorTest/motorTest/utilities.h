@@ -56,6 +56,11 @@ const double loadCellScale[7] = {(1/sqrt(2.0)) * 50.53}; //From calibration test
 #define     OPEN_LOOP 0
 #define     CLOSED_LOOP 0
 
+#define LOADCELL_DAQ 0
+#define MOTOR_VOLTAGE_DAQ 1
+#define MOTOR_ENCODER_DAQ 2
+#define MOTOR_REF_DAQ 3
+
 extern int dataAcquisitionFlag[4];
 int proceedState(int *);
 
