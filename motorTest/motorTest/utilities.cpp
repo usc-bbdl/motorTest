@@ -1,7 +1,7 @@
 #include <utilities.h>
 #include <stdio.h>
 #include <conio.h>
-#include <motorControl.h>
+#include "motorControl.h"
 #include "scanMotorVoltage.h"
 
 //#include <expParadigmMuscleLengthCalibration.h>
@@ -12,8 +12,8 @@
 //#include <expParadigmCDMRPimplant.h>
 
 int dataAcquisitionFlag[4] = {1,1,1,1}; //force[0], motorEncoder[1], reference force[2], motor command [3]
-motorControl motors(); 
-scanMotorVoltage scanVoltageSpace(& motors);
+motorControl motors; 
+scanMotorVoltage scanMotorVoltageObject(& motors);
 
 
 int proceedState(int *state)
@@ -32,18 +32,17 @@ int proceedState(int *state)
         *state = STATE_OPEN_LOOP;
         break;
     case STATE_OPEN_LOOP:
-        //Connect the Neural FPGA and DAQ, Start controlling muscle force
+        //Start data acquision
         motors.motorControllerStart();
         Sleep(1000);
-//        motors.resetMuscleLength = TRUE;
-        printf("Open-Loop ; Next stage is Experiment Paradigm\n");
+        printf("Open-Loop ; Next stage is Selecting Experiment Paradigm\n");
         *state = STATE_CLOSED_LOOP;
         break;
     case STATE_CLOSED_LOOP:        
         printf("\n\nWhat Paradigm do you want to run?\n");
         printf("\t[0] Shut down\n");
         printf("\t[1] Sinusoidal Voltage\n");
-        printf("\t[2] White Noise\n");
+        printf("\t[2] White Noise Voltage\n");
         
         do{
             scanf("%d", &menu);
@@ -84,8 +83,8 @@ int proceedState(int *state)
 
             }while (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000)));
 
-        scanVoltageSpace.setSinValues(sinValues); // passes array address to function that sets the values.
-        scanVoltageSpace.startScan();
+        scanMotorVoltageObject.setSinValues(sinValues); // passes array address to function that sets the values.
+        scanMotorVoltageObject.startScan();
 
         *state= STATE_CLOSED_LOOP;
         break;
@@ -102,8 +101,8 @@ int proceedState(int *state)
 
             }while (!((sinValues[0] <= 1000) && (sinValues[1] <=1000) && (sinValues[2] <=1000)));
 
-        scanVoltageSpace.setSinValues(sinValues); // passes array address to function that sets the values.
-        scanVoltageSpace.startScan();
+        scanMotorVoltageObject.setSinValues(sinValues); // passes array address to function that sets the values.
+        scanMotorVoltageObject.startScan();
 
     *state = STATE_CLOSED_LOOP;
     break;
