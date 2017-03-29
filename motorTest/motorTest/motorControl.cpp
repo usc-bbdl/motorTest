@@ -28,7 +28,9 @@ motorControl::motorControl()
     tock=0.0;
     sprintf(dataSample,"");
     //Flag for data acquision, the sequence is [loadcell, motorVoltage, motorEncoder, motorRef]
-    bool flag[4] = {true};
+    bool flag[4];
+    for(int i = 0; i<4; i++)
+        flag[i] = true;
     setDataAcquisitionFlag(flag);
     closedLoop = true;
     newTrial = 0;
@@ -215,8 +217,7 @@ void motorControl::createDataSampleString()
         k = 0;
         experimentControl = 0;
     }
-    
-    sprintf(dataSample,"%.3f,%d",tock,experimentControl);
+    sprintf(dataSample,"%.3f,%.3f",tock,experimentControl);
         if (dataAcquisitionFlag[0])
         {
             for (int i=0; i < NUMBER_OF_MUSCLES; i++)
@@ -326,35 +327,37 @@ Error:
 int motorControl::createHeader4DataFile()
 {
     char dataTemp[20];
-    strcpy(header,"Time");
+    strcpy(header,"Time, Experimental Paradigm,");
     if (dataAcquisitionFlag[0]){
         for (int i=0; i < NUMBER_OF_MUSCLES;i++)
         {
-            sprintf(dataTemp,"Measured Force %d", i);
+            sprintf(dataTemp,"Measured Force %d,", i);
             strcat (header, dataTemp);
         }
     }
     if (dataAcquisitionFlag[1]){
         for (int i=0; i < NUMBER_OF_MUSCLES;i++)
         {
-            sprintf(dataTemp,"Shaft Encoder %d", i);
+            sprintf(dataTemp,"Shaft Encoder %d,", i);
             strcat (header, dataTemp);
         }
     }
     if (dataAcquisitionFlag[2]){
         for (int i=0; i < NUMBER_OF_MUSCLES;i++)
         {
-            sprintf(dataTemp,"Reference Force %d", i);
+            sprintf(dataTemp,"Reference Force %d,", i);
             strcat (header, dataTemp);
         }
     }
     if (dataAcquisitionFlag[3]){
         for (int i=0; i < NUMBER_OF_MUSCLES;i++)
         {
-            sprintf(dataTemp,"Motor Command %d", i);
+            sprintf(dataTemp,"Motor Command %d,", i);
             strcat (header, dataTemp);
         }
     }
+    sprintf(dataTemp,"\n");
+    strcat (header, dataTemp);
     return 0;
 }
     
@@ -365,7 +368,7 @@ int motorControl::initializeTaskHandles()
     DAQmxErrChk (DAQmxCreateTask("",&loadCelltaskHandle));
     DAQmxErrChk (DAQmxCreateTask("",&motorTaskHandle));
     DAQmxErrChk (DAQmxCreateTask("",&motorEnableHandle));
-    char portNumber[20],channelDescription[20];
+    char portNumber[50],channelDescription[20];
     for (int i = 0; i < NUMBER_OF_MUSCLES; i ++)
     {
         createPortNumber(LOAD_CELL,i,portNumber,channelDescription);
@@ -399,7 +402,7 @@ Error:
 }
 int motorControl::createDataEnable()
 {
-    dataEnable = 0x01;
+    dataEnable = 0xFF;
     return 0;
 }
 int motorControl::createPortNumber(int hardware,int index,char * portNumber,char * channelDescription)

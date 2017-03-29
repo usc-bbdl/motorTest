@@ -16,6 +16,8 @@ scanMotorVoltage::scanMotorVoltage(motorControl *temp){
     offset = 0.0;
     isResetTimer = FALSE;
     sinAmp = 1;
+    maxVoltOffset = 10;
+    minVoltOffset = 1;
 }
 
 
@@ -73,6 +75,7 @@ int scanMotorVoltage::startSinVoltageScan(){
     for (int i = 0; i < numOfOffsetVoltage; i ++){
         for(int j = 0; j < numOfSinFreq; j++)
         {
+            std::cout<<"Offset"<<voltOffset[i]<<" SinFreq:"<<sinFreq[j]<<std::endl<<std::endl<<std::endl;
             newTrial = 1;
             cycle = 0;
             paradigm[0] = 1000;
