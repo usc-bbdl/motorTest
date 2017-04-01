@@ -5,6 +5,22 @@ motorTest\ipch\
 motorTest/ipch/
 motorTest\motorTest\ipch\
 motorTest/motorTest/ipch/
+
+motorTest/ipch/*.*
+motorTest/*.sdf
+motorTest/*.suo
+
+
+# Visual C++ cache files
+motorTest/ipch/
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+
+
+
 *.suo
 *.user
 *.userosscache

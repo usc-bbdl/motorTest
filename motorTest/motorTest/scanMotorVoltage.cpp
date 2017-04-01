@@ -70,7 +70,7 @@ int scanMotorVoltage::startSinVoltageScan(){
     }
     generateSinusoidAmplitudes();
     generateSinusoidFrequencies();
-    int cycle = 0, newTrial = 0;
+    int cycle = 0, newTrial = 0, key = 0;
     double sinPeriod=0, paradigm[5] = {0.0};
     for (int i = 0; i < numOfOffsetVoltage; i ++){
         for(int j = 0; j < numOfSinFreq; j++)
@@ -78,7 +78,7 @@ int scanMotorVoltage::startSinVoltageScan(){
             std::cout<<"Offset"<<voltOffset[i]<<" SinFreq:"<<sinFreq[j]<<std::endl<<std::endl<<std::endl;
             newTrial = 1;
             cycle = 0;
-            paradigm[0] = 1000;
+            paradigm[0] = 999;
             paradigm[1] = 1;
             paradigm[2] = voltOffset[i];
             paradigm[3] = sinFreq[j];

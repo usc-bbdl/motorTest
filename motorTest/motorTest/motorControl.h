@@ -11,10 +11,10 @@
 
 class motorControl
 {
-    int errorMotorControl, experimentControl, newTrial;
+    int errorMotorControl, newTrial;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I, encoderBias, encoderGain, paradigm[5];
+    double I, encoderBias, encoderGain, paradigm[5], experimentControl;
     timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);

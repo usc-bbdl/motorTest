@@ -34,7 +34,7 @@ motorControl::motorControl()
     setDataAcquisitionFlag(flag);
     closedLoop = true;
     newTrial = 0;
-    experimentControl = 0;
+    experimentControl = 0.0;
 }
 void motorControl::setDataAcquisitionFlag(bool flag[])
 {
@@ -217,7 +217,7 @@ void motorControl::createDataSampleString()
         k = 0;
         experimentControl = 0;
     }
-    sprintf(dataSample,"%.3f,%.3f",tock,experimentControl);
+    sprintf(dataSample,"%.3f,%08.3f",tock,experimentControl);
         if (dataAcquisitionFlag[0])
         {
             for (int i=0; i < NUMBER_OF_MUSCLES; i++)
