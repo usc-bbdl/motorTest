@@ -26,7 +26,7 @@ class scanMotorVoltage
      float64 frequency, amplitude, offset;
      int flag;
      int numOfSinFreq, numOfOffsetVoltage;
-     double sinFreq[100], voltOffset[100], minSinFreq, maxSinFreq, minVoltOffset, maxVoltOffset, sinAmp, voltOffsetResolution, sinFreqResolution;
+     double sinFreq[100], voltOffset[100], minSinFreq, maxSinFreq, minVoltOffset, maxVoltOffset, sinAmp, voltOffsetResolution, sinFreqResolution, noiseMin, noiseMax;
 
 public:
      scanMotorVoltage(motorControl *);

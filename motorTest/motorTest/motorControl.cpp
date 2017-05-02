@@ -155,9 +155,7 @@ void motorControl::controlLoop(void)
         {
             if (closedLoop)
             {
-                errorForce[i] = motorRef[i] - loadCellData[i];
-                integral[i] = integral[i] + errorForce[i] * (tock - tick);
-                motorCommand[i] = integral[i] * I;
+                customizedControllerLaw(i);
             }
             else
             {
@@ -200,6 +198,59 @@ Error:
 		printf("DAQmx Error: %s\n",errBuff);
         printf("Motor control Error\n");
 	}
+}
+void motorControl::customizedControllerLaw(int muscleIndex)
+{ 
+    static double motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES], error[NUMBER_OF_MUSCLES], errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
+    motorCommand[muscleIndex] = b0 * error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex];
+    error[muscleIndex] = motorRef[muscleIndex] - loadCellData[muscleIndex] * optimalGain;
+    error2PastValue[muscleIndex] = errorPastValue[muscleIndex];
+    errorPastValue[muscleIndex] = error[muscleIndex];
+    motorCommand2PastValue[muscleIndex] = motorCommandPastValue[muscleIndex];
+    motorCommandPastValue[muscleIndex] = motorCommand[muscleIndex];
+    //loadCellData
+    //motorCommand
+}
+void motorControl::setControlLaw(int controlLaw)
+{
+    this->controlLaw = controlLaw;
+    switch (controlLaw) 
+    {
+        case OPTIMAL_GAIN:
+            b0 = 1;
+            b1 = 0;
+            b2 = 0;
+            a1 = 0;
+            a2 = 0;
+            optimalGain = 1;
+            //NEEDS AN OBSERVER. NOT COMPLETE. DO NOT USE NOW.
+        break;
+        case LEAD_LAG:
+            b0 = 1;
+            b1 = 0;
+            b2 = 0;
+            a1 = 0;
+            a2 = 0;
+            optimalGain = 1;
+            
+        break;
+        case LEAD:
+            b0 = 1;
+            b1 = 0;
+            b2 = 0;
+            a1 = 0;
+            a2 = 0;
+            optimalGain = 1;
+        break;
+        case PI:
+            b0 = 1;
+            b1 = 0;
+            b2 = 0;
+            a1 = 0;
+            a2 = 0;
+            optimalGain = 1;
+        break;
+    }
 }
 void motorControl::createDataSampleString()
 {

@@ -9,12 +9,17 @@
 #include <ctime>
 #include <timeClass.h>
 
+#define OPTIMAL_GAIN 1
+#define LEAD_LAG 2
+#define LEAD 3
+#define PI 4
+
 class motorControl
 {
-    int errorMotorControl, newTrial;
+    int errorMotorControl, newTrial, controlLaw;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I, encoderBias, encoderGain, paradigm[5], experimentControl;
+    double I, encoderBias, encoderGain, paradigm[5], experimentControl, optimalGain, b0, b1, b2, a1, a2;
     timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);
@@ -31,6 +36,7 @@ class motorControl
     int createWindingUpCommand();
     int createPortNumber(int,int,char *,char *);
     int createFileName();
+    void customizedControllerLaw(int muscleIndex);
     int scaleMuscleLengthData(float64 *);
     int scaleloadCellData(float64 *);
     void createDataSampleString();
@@ -48,5 +54,6 @@ public:
     void updateMotorRef(float64 *, int , double *);
     void setDataAcquisitionFlag(bool *);
     void setOpenLoop();
+    void setControlLaw(int controlLaw);
 };
 #endif

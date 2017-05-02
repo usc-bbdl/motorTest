@@ -3,6 +3,7 @@
 #include "motorControl.h"
 #include "scanMotorVoltage.h"
 #include "utilities.h"
+#include <random>
 
 
 scanMotorVoltage::scanMotorVoltage(motorControl *temp){
@@ -18,6 +19,9 @@ scanMotorVoltage::scanMotorVoltage(motorControl *temp){
     sinAmp = 1;
     maxVoltOffset = 10;
     minVoltOffset = 1;
+    noiseMin = 0;
+    noiseMax = 1;
+
 }
 
 
@@ -90,7 +94,7 @@ int scanMotorVoltage::startSinVoltageScan(){
                     motorRef[k] = voltOffset[i] + sinAmp * sin (2 * PI * sinFreq[j] * tick);
                 motorsScanVoltage->updateMotorRef(motorRef, newTrial, paradigm);
                 newTrial = 0;
-                Sleep(10);
+                Sleep(2);
                 if (tick>sinPeriod)
                 {
                     cycle ++;
@@ -99,11 +103,49 @@ int scanMotorVoltage::startSinVoltageScan(){
             }while (cycle<10);
         }
     }
+    isResetTimer = FALSE;
     return 1;
 }
 
 int scanMotorVoltage::startNoiseVoltageScan(){
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(noiseMin,noiseMax);
+    voltOffsetResolution = 1;
 
+    if (~isResetTimer)
+    {
+        timeData.resetTimer();
+        isResetTimer = TRUE;
+    }
+    int newTrial = 0, key = 0;
+    double paradigm[5] = {0.0}, noise = 0;
+    double noiseVoltageOffset[10];
+    numOfOffsetVoltage = 10;
+    for (int i = 0; i < numOfOffsetVoltage; i ++)
+        noiseVoltageOffset[i] = i;
+    
+    for (int i = 0; i < numOfOffsetVoltage; i ++){
+            timeData.resetTimer();
+            std::cout<<std::endl<<"Noise Offset"<<noiseVoltageOffset[i]<<std::endl<<std::endl<<std::endl;
+            newTrial = 1;
+            paradigm[0] = 999;
+            paradigm[1] = 2;
+            paradigm[2] = noiseVoltageOffset[i];
+            paradigm[3] = noiseMin;
+            paradigm[4] = noiseMax;
+            do{
+                tick = timeData.getCurrentTime();
+                for (int k = 0 ; k < NUMBER_OF_MUSCLES; k++)
+                {
+                    noise = distribution(generator);
+                    motorRef[k] = noiseVoltageOffset[i] + noise;
+                }
+                motorsScanVoltage->updateMotorRef(motorRef, newTrial, paradigm);
+                newTrial = 0;
+                Sleep(5);
+            }while (tick<120);
+    }
+    isResetTimer = FALSE;
     return 1;
 }
 
