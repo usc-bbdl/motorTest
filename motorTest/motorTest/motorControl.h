@@ -9,9 +9,9 @@
 #include <ctime>
 #include <timeClass.h>
 
-#define OPTIMAL_GAIN 1
-#define LEAD_LAG 2
-#define LEAD 3
+#define LAG 1
+#define INTEGRAL 2
+#define OPTIMAL_GAIN 3
 #define PI 4
 
 class motorControl
@@ -19,7 +19,7 @@ class motorControl
     int errorMotorControl, newTrial, controlLaw;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I, encoderBias, encoderGain, paradigm[5], experimentControl, optimalGain, b0, b1, b2, a1, a2;
+    double I, encoderBias, encoderGain, paradigm[5], experimentControl, optimalGain, b0, b1, b2, a1, a2, ki;
     timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);

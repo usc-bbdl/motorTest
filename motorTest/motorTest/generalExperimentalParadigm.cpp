@@ -46,7 +46,7 @@ void generalExperimentalParadigm::nextState()
         //Start data acquision
         motorState = STATE_PRE_DATA_ACQUISITION;
         printf("Starting Data Acquisition\n");
-        motors.setOpenLoop();//Comment out this line for closed-loop control
+        //motors.setOpenLoop();//Comment out this line for closed-loop control
         motorError = motors.motorControllerStart();
         if (motorError == 0)
         {

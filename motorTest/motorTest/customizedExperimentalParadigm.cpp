@@ -1,5 +1,6 @@
 #include "customizedExperimentalParadigm.h"
 #include "scanMotorVoltage.h"
+#include "motorControl.h"
 void customizedExperimentalParadigm::initialize(motorControl* temp)
 {
     motors = temp;
@@ -7,9 +8,11 @@ void customizedExperimentalParadigm::initialize(motorControl* temp)
 int customizedExperimentalParadigm::runExperiment()
 {
     scanMotorVoltage scanMotorVoltageObject(motors);
+    motorControl motorFunctions;
     const int STATE_EXIT = 0;
     const int STATE_SINUSOIDAL_VOLTAGE = 1;
     const int STATE_WHITE_NOISE = 2;
+    const int STATE_CONTROLLER_TEST =3;
     int menu = 0;
     float64 sinValues[4]; //These are the values used to specify the sin wave parameters
     bool showMenu = true;
@@ -19,11 +22,12 @@ int customizedExperimentalParadigm::runExperiment()
         printf("\t[0] Shut down\n");
         printf("\t[1] Sinusoidal Voltage\n");
         printf("\t[2] White Noise Voltage\n");
+        printf("\t[3] Controller Test\n");
         do{
             scanf("%d", &menu);
-            if (!((menu <= 2) || (menu >= 0)))
+            if (!((menu <= 3) || (menu >= 0)))
                 printf("Wrong input! try Again.\n");
-        }while (!((menu <= 2) || (menu >= 0)));
+        }while (!((menu <= 3) || (menu >= 0)));
 
         switch(menu)
         {
@@ -41,11 +45,28 @@ int customizedExperimentalParadigm::runExperiment()
                 scanMotorVoltageObject.startScan();
                 printf("Press Space to continue\n");
                 break;
+            case 3:
+                experimentalState = STATE_CONTROLLER_TEST;
+                printf("Controller Test Selected\n");
+                printf("\nWhat controller do you want to run\n");
+                printf("\t[1] Lag\n");
+                printf("\t[2] Integral\n");
+
+                do{
+                    scanf("%d", &menu);
+                    if (!((menu <= 2) || (menu > 0)))
+                        printf("Wrong input! try Again.\n");
+                    }while (!((menu <= 2) || (menu > 0)));
+                if(menu==1){
+                     motorFunctions.setControlLaw(menu);
+                     //run test input
+                }
 
             case 0:
                 experimentalState = STATE_EXIT;
                 printf("\nPress space to exit\n");
                 printf("Press Space to continue\n");
+                exit(0);
                 break;
             default: break;
         }

@@ -202,7 +202,7 @@ Error:
 void motorControl::customizedControllerLaw(int muscleIndex)
 { 
     static double motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES], error[NUMBER_OF_MUSCLES], errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
-    motorCommand[muscleIndex] = b0 * error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex];
+    motorCommand[muscleIndex] = ki* (b0 * error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex]);
     error[muscleIndex] = motorRef[muscleIndex] - loadCellData[muscleIndex] * optimalGain;
     error2PastValue[muscleIndex] = errorPastValue[muscleIndex];
     errorPastValue[muscleIndex] = error[muscleIndex];
@@ -216,25 +216,27 @@ void motorControl::setControlLaw(int controlLaw)
     this->controlLaw = controlLaw;
     switch (controlLaw) 
     {
-        case OPTIMAL_GAIN:
+        case LAG:
             b0 = 1;
             b1 = 0;
             b2 = 0;
             a1 = 0;
             a2 = 0;
             optimalGain = 1;
+            ki = 20;
             //NEEDS AN OBSERVER. NOT COMPLETE. DO NOT USE NOW.
         break;
-        case LEAD_LAG:
+        case INTEGRAL:
             b0 = 1;
-            b1 = 0;
+            b1 = -1;
             b2 = 0;
             a1 = 0;
             a2 = 0;
             optimalGain = 1;
+            ki = 20;
             
         break;
-        case LEAD:
+        case OPTIMAL_GAIN:
             b0 = 1;
             b1 = 0;
             b2 = 0;
