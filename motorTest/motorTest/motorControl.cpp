@@ -161,12 +161,11 @@ void motorControl::controlLoop(void)
         }
         for (int i=0; i < NUMBER_OF_MUSCLES; i++)
         {
-            if (closedLoop)
+            if (closedLoop==true)
             {
                 customizedControllerLaw(i);
-
             }
-            else
+            else if (closedLoop==false)
             {
                 motorCommand[i] = motorRef[i];
             }
@@ -175,7 +174,7 @@ void motorControl::controlLoop(void)
             if (motorCommand[i] < motorMinVoltage)
                 motorCommand[i] = motorMinVoltage;
         }
-        printf("LC1: %+4.2f; MR1: %+4.2f; MC1: %+4.2f, \r",loadCellData[0],motorRef[0], motorCommand[0]);
+        printf("LC1: %+4.2f; MR1: %+4.2f; MC1: %+4.2f\r",loadCellData[0],motorRef[0], motorCommand[0]);
         ReleaseMutex( hIOMutex);
         createDataSampleString();
         fprintf(dataFile,dataSample);

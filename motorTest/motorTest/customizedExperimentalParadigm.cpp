@@ -8,7 +8,6 @@ void customizedExperimentalParadigm::initialize(motorControl* temp)
 int customizedExperimentalParadigm::runExperiment()
 {
     scanMotorVoltage scanMotorVoltageObject(motors);
-    motorControl motorFunctions;
     const int STATE_EXIT = 0;
     const int STATE_SINUSOIDAL_VOLTAGE = 1;
     const int STATE_WHITE_NOISE = 2;
@@ -66,8 +65,8 @@ int customizedExperimentalParadigm::runExperiment()
                     if (!((answer == 'n') || (answer == 'y')))
                         printf("Wrong input! try Again.\n");
                     }while (!((answer == 'n') || (answer == 'y')));
-               // motorFunctions.setControlLaw(menu);
-                motorFunctions.setClosedLoop();
+                motors->setControlLaw(menu);
+                motors->setClosedLoop();
                 scanMotorVoltageObject.setNoiseScan();
                 scanMotorVoltageObject.startScan();
                 break;
