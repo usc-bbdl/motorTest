@@ -7,6 +7,14 @@
 motorControl::motorControl()
 {
     I = 3;
+    b0 = 0;
+    b1 = 0;
+    b2 = 0;
+    a1 = 0;
+    a2 = 0;
+    optimalGain = 0;
+
+    ki=0;
     createHeader4DataFile();
     errorMotorControl = initializeTaskHandles();
     createDataEnable();
@@ -32,7 +40,7 @@ motorControl::motorControl()
     for(int i = 0; i<4; i++)
         flag[i] = true;
     setDataAcquisitionFlag(flag);
-    closedLoop = true;
+    closedLoop = false;
     newTrial = 0;
     experimentControl = 0.0;
 }
@@ -156,6 +164,7 @@ void motorControl::controlLoop(void)
             if (closedLoop)
             {
                 customizedControllerLaw(i);
+
             }
             else
             {
@@ -166,7 +175,7 @@ void motorControl::controlLoop(void)
             if (motorCommand[i] < motorMinVoltage)
                 motorCommand[i] = motorMinVoltage;
         }
-        printf("LC1: %+4.2f; MR1: %+4.2f, \r",loadCellData[0],motorRef[0]);
+        printf("LC1: %+4.2f; MR1: %+4.2f; MC1: %+4.2f, \r",loadCellData[0],motorRef[0], motorCommand[0]);
         ReleaseMutex( hIOMutex);
         createDataSampleString();
         fprintf(dataFile,dataSample);
@@ -201,8 +210,8 @@ Error:
 }
 void motorControl::customizedControllerLaw(int muscleIndex)
 { 
-    static double motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES], error[NUMBER_OF_MUSCLES], errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
-    motorCommand[muscleIndex] = ki* (b0 * error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex]);
+    static double error[NUMBER_OF_MUSCLES], errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
+    motorCommand[muscleIndex] = b0*(tock - tick)* error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex];
     error[muscleIndex] = motorRef[muscleIndex] - loadCellData[muscleIndex] * optimalGain;
     error2PastValue[muscleIndex] = errorPastValue[muscleIndex];
     errorPastValue[muscleIndex] = error[muscleIndex];
@@ -223,17 +232,15 @@ void motorControl::setControlLaw(int controlLaw)
             a1 = 0;
             a2 = 0;
             optimalGain = 1;
-            ki = 20;
             //NEEDS AN OBSERVER. NOT COMPLETE. DO NOT USE NOW.
         break;
         case INTEGRAL:
-            b0 = 1;
-            b1 = -1;
+            b0 = 20.0;
+            b1 = 0;
             b2 = 0;
-            a1 = 0;
+            a1 = -1;
             a2 = 0;
             optimalGain = 1;
-            ki = 20;
             
         break;
         case OPTIMAL_GAIN:
@@ -534,7 +541,7 @@ void motorControl::updateMotorRef(float64 *a,int newTrial, double * paradigm){
     }
 }
 
-void  motorControl::setOpenLoop()
+void  motorControl::setClosedLoop()
 {
-    closedLoop = false;
+    closedLoop = true;
 }

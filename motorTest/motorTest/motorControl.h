@@ -27,7 +27,7 @@ class motorControl
     bool live, closedLoop;
     double tick,tock;
     float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[NUMBER_OF_MUSCLES], windingUpCmnd[NUMBER_OF_MUSCLES];
-    float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES];
+    float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES], motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES];
     char header[200], dataSample[600], fileName[200];
     int controlLoopParadigm;
     int createHeader4DataFile();
@@ -53,7 +53,7 @@ public:
     double getTime();
     void updateMotorRef(float64 *, int , double *);
     void setDataAcquisitionFlag(bool *);
-    void setOpenLoop();
+    void setClosedLoop();
     void setControlLaw(int controlLaw);
 };
 #endif

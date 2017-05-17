@@ -142,7 +142,7 @@ int scanMotorVoltage::startNoiseVoltageScan(){
                 }
                 motorsScanVoltage->updateMotorRef(motorRef, newTrial, paradigm);
                 newTrial = 0;
-                Sleep(5);
+                Sleep(4000);
             }while (tick<120);
     }
     isResetTimer = FALSE;

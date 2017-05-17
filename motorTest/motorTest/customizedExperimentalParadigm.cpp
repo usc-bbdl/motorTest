@@ -14,6 +14,7 @@ int customizedExperimentalParadigm::runExperiment()
     const int STATE_WHITE_NOISE = 2;
     const int STATE_CONTROLLER_TEST =3;
     int menu = 0;
+    char answer;
     float64 sinValues[4]; //These are the values used to specify the sin wave parameters
     bool showMenu = true;
     while (showMenu)
@@ -57,10 +58,19 @@ int customizedExperimentalParadigm::runExperiment()
                     if (!((menu <= 2) || (menu > 0)))
                         printf("Wrong input! try Again.\n");
                     }while (!((menu <= 2) || (menu > 0)));
-                if(menu==1){
-                     motorFunctions.setControlLaw(menu);
-                     //run test input
-                }
+                
+                printf("\nReady to start impulse response analysis?\n");
+               
+                do{
+                    std::cin>>answer;
+                    if (!((answer == 'n') || (answer == 'y')))
+                        printf("Wrong input! try Again.\n");
+                    }while (!((answer == 'n') || (answer == 'y')));
+               // motorFunctions.setControlLaw(menu);
+                motorFunctions.setClosedLoop();
+                scanMotorVoltageObject.setNoiseScan();
+                scanMotorVoltageObject.startScan();
+                break;
 
             case 0:
                 experimentalState = STATE_EXIT;
@@ -68,7 +78,9 @@ int customizedExperimentalParadigm::runExperiment()
                 printf("Press Space to continue\n");
                 exit(0);
                 break;
-            default: break;
+            default: 
+                std::cout<<"Error, bad input, quitting\n";
+                break;
         }
     }
    
