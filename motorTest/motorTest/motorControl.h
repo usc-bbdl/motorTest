@@ -19,7 +19,7 @@ class motorControl
     int errorMotorControl, newTrial, controlLaw;
     uInt32      dataEnable;
     TaskHandle  motorTaskHandle, motorEnableHandle, loadCelltaskHandle, encodertaskHandle[NUMBER_OF_MUSCLES];
-    double I, encoderBias, encoderGain, paradigm[5], experimentControl, optimalGain, b0, b1, b2, a1, a2, ki;
+    double I, encoderBias, encoderGain, paradigm[5], experimentControl, optimalGain, b0, b1, b2,a0, a1, a2, ki;
     timeClass timeData;
     static void motorControlLoop(void*);
     void controlLoop(void);
@@ -27,7 +27,7 @@ class motorControl
     bool live, closedLoop;
     double tick,tock;
     float64 encoderData[NUMBER_OF_MUSCLES], loadCellOffset[NUMBER_OF_MUSCLES], windingUpCmnd[NUMBER_OF_MUSCLES];
-    float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES], motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES];
+    float64 loadCellData[NUMBER_OF_MUSCLES], motorRef[NUMBER_OF_MUSCLES], muscleLength[NUMBER_OF_MUSCLES], motorCommand[NUMBER_OF_MUSCLES], motorCommandPastValue[NUMBER_OF_MUSCLES], motorCommand2PastValue[NUMBER_OF_MUSCLES], errorNow[NUMBER_OF_MUSCLES];
     char header[200], dataSample[600], fileName[200];
     int controlLoopParadigm;
     int createHeader4DataFile();
@@ -40,7 +40,7 @@ class motorControl
     int scaleMuscleLengthData(float64 *);
     int scaleloadCellData(float64 *);
     void createDataSampleString();
-    int dataAcquisitionFlag[4];
+    int dataAcquisitionFlag[5];
 public:
     motorControl();
     ~motorControl(void);

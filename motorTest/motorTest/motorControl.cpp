@@ -31,13 +31,15 @@ motorControl::motorControl()
         motorRef[i]= 0.0;
         muscleLength[i] = 0.0;
         motorCommand[i] = 0.0;
+        errorNow[i] = 0.0;
+        motorCommandPastValue[i] =0.0;
     }
     tick=0.0;
     tock=0.0;
     sprintf(dataSample,"");
     //Flag for data acquision, the sequence is [loadcell, motorVoltage, motorEncoder, motorRef]
-    bool flag[4];
-    for(int i = 0; i<4; i++)
+    bool flag[5];
+    for(int i = 0; i<5; i++)
         flag[i] = true;
     setDataAcquisitionFlag(flag);
     closedLoop = false;
@@ -50,6 +52,7 @@ void motorControl::setDataAcquisitionFlag(bool flag[])
     dataAcquisitionFlag[MOTOR_VOLTAGE_DAQ] = flag[1];
     dataAcquisitionFlag[MOTOR_ENCODER_DAQ] = flag[2];
     dataAcquisitionFlag[MOTOR_REF_DAQ] = flag[3];
+    dataAcquisitionFlag[ERROR_] = flag[4];
 }
 motorControl::~motorControl()
 {
@@ -159,20 +162,20 @@ void motorControl::controlLoop(void)
                 loadCellOffset[i] = loadCellData[i];
             firstSample = FALSE;
         }
+
+
         for (int i=0; i < NUMBER_OF_MUSCLES; i++)
         {
             if (closedLoop==true)
             {
+
                 customizedControllerLaw(i);
             }
             else if (closedLoop==false)
             {
                 motorCommand[i] = motorRef[i];
             }
-            if (motorCommand[i] > motorMaxVoltage)
-                motorCommand[i] = motorMaxVoltage;
-            if (motorCommand[i] < motorMinVoltage)
-                motorCommand[i] = motorMinVoltage;
+           
         }
         printf("LC1: %+4.2f; MR1: %+4.2f; MC1: %+4.2f\r",loadCellData[0],motorRef[0], motorCommand[0]);
         ReleaseMutex( hIOMutex);
@@ -209,13 +212,23 @@ Error:
 }
 void motorControl::customizedControllerLaw(int muscleIndex)
 { 
-    static double error[NUMBER_OF_MUSCLES], errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
-    motorCommand[muscleIndex] = b0*(tock - tick)* error[muscleIndex] + b1 * errorPastValue[muscleIndex] + b2 *error2PastValue[muscleIndex] - a1 * motorCommandPastValue[muscleIndex] - a2 * motorCommand2PastValue[muscleIndex];
-    error[muscleIndex] = motorRef[muscleIndex] - loadCellData[muscleIndex] * optimalGain;
+    static double errorPastValue[NUMBER_OF_MUSCLES], error2PastValue[NUMBER_OF_MUSCLES];
+    motorCommand[muscleIndex] = (b0/a0)*(tock - tick)* errorNow[muscleIndex] + (b1/a0) *(tock - tick)* errorPastValue[muscleIndex] + (b2/a0) *error2PastValue[muscleIndex] - (a1/a0) * motorCommandPastValue[muscleIndex] - (a2/a0) * motorCommand2PastValue[muscleIndex];
+    //motorCommand[muscleIndex] = 20 * motorCommandPastValue[muscleIndex] + 20*(tock - tick)* errorNow[muscleIndex]; 
+    
+    if (motorCommand[muscleIndex] > motorMaxVoltage)
+            motorCommand[muscleIndex] = motorMaxVoltage;
+        if (motorCommand[muscleIndex] < motorMinVoltage)
+            motorCommand[muscleIndex] = motorMinVoltage;
+
+    errorNow[muscleIndex] = motorRef[muscleIndex] - loadCellData[muscleIndex] * optimalGain;
+
     error2PastValue[muscleIndex] = errorPastValue[muscleIndex];
-    errorPastValue[muscleIndex] = error[muscleIndex];
+    errorPastValue[muscleIndex] = errorNow[muscleIndex];
     motorCommand2PastValue[muscleIndex] = motorCommandPastValue[muscleIndex];
     motorCommandPastValue[muscleIndex] = motorCommand[muscleIndex];
+
+
     //loadCellData
     //motorCommand
 }
@@ -234,10 +247,11 @@ void motorControl::setControlLaw(int controlLaw)
             //NEEDS AN OBSERVER. NOT COMPLETE. DO NOT USE NOW.
         break;
         case INTEGRAL:
-            b0 = 20.0;
-            b1 = 0;
+            b0 = 2.0;
+            b1 = 2.0;
             b2 = 0;
-            a1 = -1;
+            a0 = 2;
+            a1 = -2;
             a2 = 0;
             optimalGain = 1;
             
@@ -306,6 +320,14 @@ void motorControl::createDataSampleString()
             for (int i=0; i < NUMBER_OF_MUSCLES; i++)
             {
                 sprintf(dataTemp,",%.6f",motorCommand[i]);
+                strcat (dataSample, dataTemp);
+            }
+        }
+        if (dataAcquisitionFlag[4])
+        {
+             for (int i=0; i < NUMBER_OF_MUSCLES; i++)
+            {
+                sprintf(dataTemp,",%.6f",errorNow[i]);
                 strcat (dataSample, dataTemp);
             }
         }
@@ -414,6 +436,14 @@ int motorControl::createHeader4DataFile()
             sprintf(dataTemp,"Motor Command %d,", i);
             strcat (header, dataTemp);
         }
+    if (dataAcquisitionFlag[4]){
+        for (int i=0; i < NUMBER_OF_MUSCLES;i++)
+        {
+            sprintf(dataTemp,"Error %d,", i);
+            strcat (header, dataTemp);
+        }
+
+    }
     }
     sprintf(dataTemp,"\n");
     strcat (header, dataTemp);
